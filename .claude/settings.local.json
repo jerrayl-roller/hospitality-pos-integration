@@ -23,7 +23,9 @@
       "Bash(curl -s \"http://localhost:5000/api/bookings/search?q=test\")",
       "Bash(xargs ls *)",
       "Bash(npx tsc *)",
-      "Bash(node_modules/.bin/tsc --noEmit)"
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(xargs grep *)",
+      "Bash(grep -E \"\\\\.cs$\")"
     ]
   }
 }

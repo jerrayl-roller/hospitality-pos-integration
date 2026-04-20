@@ -32,6 +32,7 @@ builder.Services.AddSingleton<RollerTokenService>();
 builder.Services.AddScoped<IRollerApiClient, RollerApiClient>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
+builder.Services.AddScoped<IBookingResyncService, BookingResyncService>();
 builder.Services.AddScoped<IPaymentLockService, PaymentLockService>();
 builder.Services.AddScoped<IRollerGiftCardService, RollerGiftCardService>();
 builder.Services.AddScoped<TabService>();

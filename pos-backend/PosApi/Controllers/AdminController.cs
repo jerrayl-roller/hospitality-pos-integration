@@ -12,7 +12,8 @@ namespace PosApi.Controllers;
 public class AdminController(
     PosDbContext db,
     IProductService productService,
-    IPaymentLockService paymentLockService) : ControllerBase
+    IPaymentLockService paymentLockService,
+    IBookingResyncService bookingResyncService) : ControllerBase
 {
     [HttpPost("resync-products")]
     public IActionResult ResyncProducts()
@@ -56,5 +57,17 @@ public class AdminController(
         }
 
         return Ok(new { released, failed });
+    }
+
+    /// <summary>
+    /// Phase 4 (minimal): pulls fresh booking state from ROLLER for every booking-linked tab and
+    /// refreshes imported items / totals in-place. Tabs where ROLLER reports additional
+    /// booking-level payments since import are marked <c>errored</c> rather than updated.
+    /// </summary>
+    [HttpPost("resync-bookings")]
+    public async Task<IActionResult> ResyncBookings(CancellationToken ct)
+    {
+        var result = await bookingResyncService.ResyncAllTabsAsync(ct);
+        return Ok(result);
     }
 }

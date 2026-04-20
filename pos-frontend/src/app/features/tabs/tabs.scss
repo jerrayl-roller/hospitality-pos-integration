@@ -45,6 +45,8 @@
   &.status-settled { background: #e3f2fd; color: #1565c0; }
   &.status-failed { background: #fce4ec; color: #c62828; }
   &.status-walkout_pending { background: #fff3e0; color: #e65100; }
+  &.status-errored { background: #fce4ec; color: #c62828; }
+  &.status-pending_lock { background: #fff8e1; color: #9e6d00; }
 }
 
 

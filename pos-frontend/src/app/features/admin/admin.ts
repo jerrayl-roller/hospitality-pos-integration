@@ -10,6 +10,21 @@ import { TabStateService } from '../../core/tab-state.service';
 import { NotificationService } from '../../core/notification.service';
 import { ConfirmDialogComponent } from './confirm-dialog';
 
+interface BookingResyncOutcome {
+  tabId: string;
+  bookingUniqueId: string | null;
+  status: 'updated' | 'unchanged' | 'errored' | 'failed';
+  detail: string | null;
+}
+
+interface BookingResyncResult {
+  processed: number;
+  updated: number;
+  errored: number;
+  failed: number;
+  outcomes: BookingResyncOutcome[];
+}
+
 @Component({
   selector: 'app-admin',
   standalone: true,
@@ -26,9 +41,11 @@ export class AdminComponent {
   resyncing = signal(false);
   clearing = signal(false);
   releasingLocks = signal(false);
+  resyncingBookings = signal(false);
   resyncResult = signal<string | null>(null);
   clearResult = signal<string | null>(null);
   lockReleaseResult = signal<{ released: string[]; failed: { bookingUniqueId: string; error: string }[] } | null>(null);
+  bookingResyncResult = signal<BookingResyncResult | null>(null);
 
   confirmResync(): void {
     this.dialog.open(ConfirmDialogComponent, {
@@ -55,6 +72,20 @@ export class AdminComponent {
       width: '420px'
     }).afterClosed().subscribe(confirmed => {
       if (confirmed) this.runReleaseLocks();
+    });
+  }
+
+  confirmResyncBookings(): void {
+    this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Force Resync All Bookings',
+        message: 'This pulls the latest state from ROLLER for every booking-linked tab and refreshes imported items and totals. Tabs where ROLLER reports additional payments since import will be flagged as errored. Continue?',
+        confirmLabel: 'Resync Bookings',
+        confirmColor: 'primary'
+      },
+      width: '460px'
+    }).afterClosed().subscribe(confirmed => {
+      if (confirmed) this.runResyncBookings();
     });
   }
 
@@ -98,6 +129,31 @@ export class AdminComponent {
         res.failed.length > 0 ? this.notifications.error(msg) : this.notifications.info(msg);
       },
       error: () => this.releasingLocks.set(false)
+    });
+  }
+
+  private runResyncBookings(): void {
+    this.resyncingBookings.set(true);
+    this.bookingResyncResult.set(null);
+    this.api.post<BookingResyncResult>('/api/admin/resync-bookings', {}).subscribe({
+      next: res => {
+        this.resyncingBookings.set(false);
+        this.bookingResyncResult.set(res);
+        const parts = [`${res.updated} updated`, `${res.errored} errored`, `${res.failed} failed`];
+        const msg = `Resynced ${res.processed} tab(s): ${parts.join(', ')}.`;
+        (res.errored > 0 || res.failed > 0) ? this.notifications.error(msg) : this.notifications.info(msg);
+
+        // TabStateService holds the active tab in memory; pull fresh state so the right-hand
+        // panel reflects any booking items / totals that changed during the resync.
+        const active = this.tabState.currentTab;
+        if (active) {
+          const outcome = res.outcomes.find(o => o.tabId === active.tabId);
+          if (!outcome || outcome.status === 'updated' || outcome.status === 'errored') {
+            this.tabState.refreshTab(active.tabId).subscribe();
+          }
+        }
+      },
+      error: () => this.resyncingBookings.set(false)
     });
   }
 

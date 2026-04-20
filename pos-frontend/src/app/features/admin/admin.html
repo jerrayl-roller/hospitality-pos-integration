@@ -83,6 +83,59 @@
 
   <mat-card class="action-card">
     <mat-card-header>
+      <mat-icon mat-card-avatar>cloud_sync</mat-icon>
+      <mat-card-title>Force Resync All Bookings</mat-card-title>
+      <mat-card-subtitle>Pulls the latest state from ROLLER for every booking-linked tab</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <p>
+        Minimal replacement for booking-update webhooks. Refreshes imported items, guest details,
+        and grand totals from ROLLER. Any tab where ROLLER now shows additional booking-level
+        payments is flagged as <strong>errored</strong> for manual review.
+      </p>
+      @if (bookingResyncResult(); as result) {
+        <div class="result-banner" [class.result-banner--warn]="result.errored > 0 || result.failed > 0">
+          <mat-icon>{{ (result.errored === 0 && result.failed === 0) ? 'check_circle' : 'warning' }}</mat-icon>
+          <span>
+            {{ result.processed }} processed · {{ result.updated }} updated
+            @if (result.errored > 0) { · {{ result.errored }} errored }
+            @if (result.failed > 0) { · {{ result.failed }} failed }
+          </span>
+        </div>
+        @if (result.outcomes.length > 0) {
+          <ul class="outcome-list">
+            @for (o of result.outcomes; track o.tabId) {
+              <li [class]="'outcome-list__item outcome-list__item--' + o.status">
+                <span class="outcome-list__status">{{ o.status }}</span>
+                <span class="outcome-list__id">{{ o.bookingUniqueId || o.tabId }}</span>
+                @if (o.detail) {
+                  <span class="outcome-list__detail">{{ o.detail }}</span>
+                }
+              </li>
+            }
+          </ul>
+        }
+      }
+    </mat-card-content>
+    <mat-card-actions>
+      <button
+        mat-raised-button
+        color="primary"
+        [disabled]="resyncingBookings()"
+        (click)="confirmResyncBookings()">
+        @if (resyncingBookings()) {
+          <mat-spinner diameter="18"></mat-spinner>
+          Resyncing…
+        } @else {
+          <mat-icon>cloud_sync</mat-icon>
+          Resync Bookings
+        }
+      </button>
+    </mat-card-actions>
+  </mat-card>
+
+  <mat-card class="action-card">
+    <mat-card-header>
       <mat-icon mat-card-avatar>delete_sweep</mat-icon>
       <mat-card-title>Delete All Tabs &amp; Payments</mat-card-title>
       <mat-card-subtitle>Permanently removes all tab and payment records from the database</mat-card-subtitle>
