@@ -13,7 +13,12 @@
       "Bash(npm --version)",
       "Bash(npm install *)",
       "Bash(ng add *)",
-      "Bash(ng build *)"
+      "Bash(ng build *)",
+      "Bash(dotnet list *)",
+      "Bash(dotnet remove *)",
+      "Bash(curl -s http://localhost:5000/api/products/fnb)",
+      "Bash(python3 -m json.tool)",
+      "Bash(sqlcmd *)"
     ]
   }
 }

@@ -10,11 +10,14 @@ public class TabService(PosDbContext db)
 {
     private static readonly JsonSerializerOptions JsonOpts = new() { PropertyNameCaseInsensitive = true };
 
-    public async Task<TabDto> CreateTabAsync(CancellationToken ct = default)
+    public async Task<TabDto> CreateTabAsync(CreateTabRequest req, CancellationToken ct = default)
     {
         var tab = new Tab
         {
             TabId = Guid.NewGuid(),
+            GuestName = req.GuestName?.Trim(),
+            GuestEmail = req.GuestEmail?.Trim(),
+            GuestPhone = req.GuestPhone?.Trim(),
             OpenedAt = DateTime.UtcNow
         };
         db.Tabs.Add(tab);
@@ -75,6 +78,25 @@ public class TabService(PosDbContext db)
         tab.GrandTotal = ComputeTotal(items);
         await db.SaveChangesAsync(ct);
         return TabDto.FromTab(tab);
+    }
+
+    public async Task<TabDto?> RestoreItemsAsync(Guid tabId, List<TabLineItem> items, CancellationToken ct = default)
+    {
+        var tab = await db.Tabs.FirstOrDefaultAsync(t => t.TabId == tabId, ct);
+        if (tab is null) return null;
+
+        tab.AddedItemsJson = JsonSerializer.Serialize(items);
+        tab.GrandTotal = ComputeTotal(items);
+        await db.SaveChangesAsync(ct);
+        return TabDto.FromTab(tab);
+    }
+
+    public async Task<IEnumerable<TabSummaryDto>> GetAllTabsAsync(CancellationToken ct = default)
+    {
+        var tabs = await db.Tabs.AsNoTracking()
+            .OrderByDescending(t => t.OpenedAt)
+            .ToListAsync(ct);
+        return tabs.Select(TabSummaryDto.FromTab);
     }
 
     public async Task<(bool success, string? error)> DeleteTabAsync(Guid tabId, CancellationToken ct = default)

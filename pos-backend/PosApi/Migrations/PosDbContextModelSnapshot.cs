@@ -88,6 +88,15 @@ namespace PosApi.Migrations
                     b.Property<string>("BookingId")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("GuestEmail")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("GuestName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("GuestPhone")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<decimal>("GrandTotal")
                         .HasPrecision(18, 4)
                         .HasColumnType("decimal(18,4)");

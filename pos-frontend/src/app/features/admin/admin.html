@@ -1,0 +1,39 @@
+<div class="admin-container">
+  <h2>Admin</h2>
+
+  <mat-card class="action-card">
+    <mat-card-header>
+      <mat-icon mat-card-avatar>sync</mat-icon>
+      <mat-card-title>Clear Database &amp; Force Resync</mat-card-title>
+      <mat-card-subtitle>Deletes all tabs and payments, clears the product cache</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <p>
+        Use this to reset the POS to a clean state. All open tabs and payment records will be
+        permanently deleted. The product catalogue cache will be invalidated — the next time
+        someone navigates to Catalogue, it will pull fresh data from ROLLER.
+      </p>
+      @if (lastResult()) {
+        <div class="result-banner">
+          <mat-icon>check_circle</mat-icon>
+          {{ lastResult() }}
+        </div>
+      }
+    </mat-card-content>
+    <mat-card-actions>
+      <button
+        mat-raised-button
+        color="warn"
+        [disabled]="resetting()"
+        (click)="confirmReset()">
+        @if (resetting()) {
+          <mat-spinner diameter="18"></mat-spinner>
+          Clearing…
+        } @else {
+          <mat-icon>delete_sweep</mat-icon>
+          Clear &amp; Resync
+        }
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>

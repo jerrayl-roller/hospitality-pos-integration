@@ -8,10 +8,17 @@ namespace PosApi.Controllers;
 [Route("api/tabs")]
 public class TabsController(TabService tabService) : ControllerBase
 {
-    [HttpPost]
-    public async Task<IActionResult> CreateTab(CancellationToken ct)
+    [HttpGet]
+    public async Task<IActionResult> ListTabs(CancellationToken ct)
     {
-        var tab = await tabService.CreateTabAsync(ct);
+        var tabs = await tabService.GetAllTabsAsync(ct);
+        return Ok(tabs);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateTab([FromBody] CreateTabRequest req, CancellationToken ct)
+    {
+        var tab = await tabService.CreateTabAsync(req, ct);
         return Ok(tab);
     }
 
@@ -26,6 +33,13 @@ public class TabsController(TabService tabService) : ControllerBase
     public async Task<IActionResult> AddItem(Guid tabId, [FromBody] AddItemRequest req, CancellationToken ct)
     {
         var tab = await tabService.AddItemAsync(tabId, req, ct);
+        return tab is null ? NotFound() : Ok(tab);
+    }
+
+    [HttpPut("{tabId:guid}/items")]
+    public async Task<IActionResult> RestoreItems(Guid tabId, [FromBody] List<TabLineItem> items, CancellationToken ct)
+    {
+        var tab = await tabService.RestoreItemsAsync(tabId, items, ct);
         return tab is null ? NotFound() : Ok(tab);
     }
 

@@ -1,0 +1,74 @@
+<div class="tab-panel-container">
+  @if (tabState.tab$ | async; as tab) {
+    <!-- Active tab -->
+    <div class="panel-header">
+      <div class="guest-info">
+        <span class="guest-name">{{ tab.guestName || 'Guest' }}</span>
+        @if (tab.guestPhone) {
+          <span class="guest-detail">{{ tab.guestPhone }}</span>
+        }
+        @if (tab.guestEmail) {
+          <span class="guest-detail">{{ tab.guestEmail }}</span>
+        }
+      </div>
+      <button mat-icon-button class="close-btn" (click)="onClose()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <div class="items-scroll">
+      @if (tab.addedItems.length === 0) {
+        <div class="empty-hint">
+          <mat-icon>add_shopping_cart</mat-icon>
+          <p>Tap a product to add it</p>
+        </div>
+      } @else {
+        @for (item of tab.addedItems; track item.productId) {
+          <div class="line-item">
+            <div class="item-name">{{ item.productName }}</div>
+            <div class="item-row">
+              <div class="qty-controls">
+                <button mat-icon-button (click)="decrement(item.productId)">
+                  <mat-icon>remove</mat-icon>
+                </button>
+                <span class="qty">{{ item.quantity }}</span>
+                <button mat-icon-button (click)="increment(item.productId, item.productName, item.unitPrice)">
+                  <mat-icon>add</mat-icon>
+                </button>
+              </div>
+              <span class="line-total">{{ (item.unitPrice * item.quantity) | currency:'AUD':'symbol':'1.2-2' }}</span>
+            </div>
+            <div class="unit-price">@ {{ item.unitPrice | currency:'AUD':'symbol':'1.2-2' }} each</div>
+          </div>
+        }
+      }
+    </div>
+
+    <div class="panel-footer">
+      <mat-divider></mat-divider>
+      <div class="grand-total">
+        <span>Total</span>
+        <span class="total-amount">{{ tab.grandTotal | currency:'AUD':'symbol':'1.2-2' }}</span>
+      </div>
+      @if (tabState.hasChanges) {
+        <div class="footer-actions">
+          <button mat-raised-button color="primary" class="park-btn" (click)="parkTab()">
+            Add Items
+          </button>
+        </div>
+      }
+    </div>
+  } @else {
+    <!-- No active tab -->
+    <div class="no-tab">
+      <mat-icon>receipt_long</mat-icon>
+      <p>No tab open</p>
+      <button mat-raised-button color="primary" [disabled]="openingTab" (click)="openNewTabDialog()">
+        <mat-icon>add</mat-icon>
+        {{ openingTab ? 'Opening…' : 'New Tab' }}
+      </button>
+    </div>
+  }
+</div>

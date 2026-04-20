@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject, tap } from 'rxjs';
+import { BehaviorSubject, Observable, of, tap } from 'rxjs';
 import { ApiService } from './api.service';
 
 export interface TabLineItem {
@@ -12,6 +12,9 @@ export interface TabLineItem {
 export interface Tab {
   tabId: string;
   bookingId: string | null;
+  guestName: string | null;
+  guestEmail: string | null;
+  guestPhone: string | null;
   addedItems: TabLineItem[];
   grandTotal: number;
   paymentStatus: string;
@@ -20,6 +23,12 @@ export interface Tab {
   hasPendingConflict: boolean;
   openedAt: string;
   settledAt: string | null;
+}
+
+export interface CreateTabRequest {
+  guestName: string;
+  guestEmail: string;
+  guestPhone: string;
 }
 
 const SESSION_KEY = 'pos_active_tab';
@@ -31,19 +40,40 @@ export class TabStateService {
 
   readonly tab$ = this._tab$.asObservable();
 
+  private _isExistingTab = false;
+  private _originalSnapshot: TabLineItem[] | null = null;
+
   get currentTab(): Tab | null {
     return this._tab$.value;
   }
 
-  openNewTab() {
-    return this.api.post<Tab>('/api/tabs', {}).pipe(
-      tap(tab => this.setTab(tab))
+  get isExistingTab(): boolean {
+    return this._isExistingTab;
+  }
+
+  get hasChanges(): boolean {
+    const tab = this._tab$.value;
+    if (!tab || this._originalSnapshot === null) return false;
+    return JSON.stringify(tab.addedItems) !== JSON.stringify(this._originalSnapshot);
+  }
+
+  openNewTab(req: CreateTabRequest) {
+    return this.api.post<Tab>('/api/tabs', req).pipe(
+      tap(tab => {
+        this._isExistingTab = false;
+        this._originalSnapshot = [];
+        this.setTab(tab);
+      })
     );
   }
 
   refreshTab(tabId: string) {
     return this.api.get<Tab>(`/api/tabs/${tabId}`).pipe(
-      tap(tab => this.setTab(tab))
+      tap(tab => {
+        this._isExistingTab = true;
+        this._originalSnapshot = tab.addedItems.map(i => ({ ...i }));
+        this.setTab(tab);
+      })
     );
   }
 
@@ -59,10 +89,29 @@ export class TabStateService {
     );
   }
 
+  discardChanges(): Observable<Tab | null> {
+    const tab = this._tab$.value;
+    if (!tab || !this._originalSnapshot) return of(null);
+    return this.api.put<Tab>(`/api/tabs/${tab.tabId}/items`, this._originalSnapshot).pipe(
+      tap(restored => {
+        this._isExistingTab = false;
+        this._originalSnapshot = null;
+        this.setTab(restored);
+        this.clearTab();
+      })
+    );
+  }
+
   closeTab(tabId: string) {
     return this.api.delete<void>(`/api/tabs/${tabId}`).pipe(
       tap(() => this.clearTab())
     );
+  }
+
+  parkTab(): void {
+    this._isExistingTab = false;
+    this._originalSnapshot = null;
+    this.clearTab();
   }
 
   private setTab(tab: Tab): void {

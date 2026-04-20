@@ -24,7 +24,6 @@
 
   <!-- Loaded state -->
   @if (!loading() && !error()) {
-    <!-- Category tabs -->
     @if (categories().length > 0) {
       <div class="category-tabs">
         @for (cat of categories(); track cat) {
@@ -39,29 +38,38 @@
       </div>
     }
 
-    <!-- Product grid -->
     <div class="product-grid">
       @for (product of filteredProducts(); track product.productId) {
-        <mat-card class="product-card">
-          <mat-card-content>
-            <div class="product-category-badge">{{ product.category ?? 'Uncategorised' }}</div>
-            <h3 class="product-name">{{ product.name }}</h3>
+        <div
+          class="product-card"
+          [class.adding]="addingProductId() === product.productId"
+          (click)="onProductClick(product)"
+          role="button">
+
+          <!-- Product image -->
+          <div class="product-image">
+            @if (product.imageUrl) {
+              <img [src]="product.imageUrl" [alt]="product.name" loading="lazy" />
+            } @else {
+              <div class="image-placeholder">
+                <mat-icon>local_cafe</mat-icon>
+              </div>
+            }
+          </div>
+
+          <!-- Product info -->
+          <div class="product-info">
+            @if (product.parentName) {
+              <div class="parent-name">{{ product.parentName }}</div>
+            }
+            <div class="variation-name">{{ product.name }}</div>
             <div class="product-price">{{ product.price | currency:'AUD':'symbol':'1.2-2' }}</div>
-          </mat-card-content>
-          <mat-card-actions>
-            <button
-              mat-raised-button
-              color="primary"
-              [disabled]="!tabState.currentTab || addingProductId() === product.productId"
-              (click)="addToTab(product)">
-              @if (addingProductId() === product.productId) {
-                <mat-spinner diameter="18" color="accent"></mat-spinner>
-              } @else {
-                Add to Tab
-              }
-            </button>
-          </mat-card-actions>
-        </mat-card>
+          </div>
+
+          @if (addingProductId() === product.productId) {
+            <mat-spinner diameter="20" class="adding-spinner"></mat-spinner>
+          }
+        </div>
       }
 
       @if (filteredProducts().length === 0) {
