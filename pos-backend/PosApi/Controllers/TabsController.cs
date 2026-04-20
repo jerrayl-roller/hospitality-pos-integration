@@ -7,7 +7,10 @@ namespace PosApi.Controllers;
 
 [ApiController]
 [Route("api/tabs")]
-public class TabsController(TabService tabService, IBookingService bookingService) : ControllerBase
+public class TabsController(
+    TabService tabService,
+    IBookingService bookingService,
+    SettlementService settlementService) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> ListTabs(CancellationToken ct)
@@ -86,5 +89,30 @@ public class TabsController(TabService tabService, IBookingService bookingServic
         {
             return StatusCode(503, new { error = "payment_lock_failed", detail = ex.Detail });
         }
+    }
+
+    [HttpPost("{tabId:guid}/payments")]
+    public async Task<IActionResult> AddPayment(Guid tabId, [FromBody] AddPaymentRequest req, CancellationToken ct)
+    {
+        var (tab, error, detail) = await settlementService.AddPaymentAsync(tabId, req, ct);
+        if (tab is null && error == "not_found") return NotFound();
+        if (tab is null) return Conflict(new { error, detail });
+        return Ok(tab);
+    }
+
+    [HttpPost("{tabId:guid}/settle")]
+    public async Task<IActionResult> SettleTab(Guid tabId, CancellationToken ct)
+    {
+        var (tab, error) = await settlementService.SettleTabAsync(tabId, ct);
+        if (tab is null && error == "not_found") return NotFound();
+        if (tab is null) return Conflict(new { error });
+        return Ok(tab);
+    }
+
+    [HttpGet("{tabId:guid}/receipt")]
+    public async Task<IActionResult> GetReceipt(Guid tabId, CancellationToken ct)
+    {
+        var receipt = await settlementService.GetReceiptAsync(tabId, ct);
+        return receipt is null ? NotFound() : Ok(receipt);
     }
 }

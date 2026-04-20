@@ -1,114 +1,248 @@
-<div class="tabs-container">
-  <div class="page-header">
-    <h2>Tabs</h2>
-    <button mat-icon-button (click)="load()" [disabled]="loading()" title="Refresh">
-      <mat-icon>refresh</mat-icon>
-    </button>
-  </div>
+<mat-drawer-container class="tabs-drawer-container" autosize>
 
-  @if (loading()) {
-    <div class="loading"><mat-spinner diameter="40"></mat-spinner></div>
-  }
-
-  @if (!loading() && error()) {
-    <div class="error-state">
-      <mat-icon>error_outline</mat-icon>
-      <p>Failed to load tabs.</p>
-      <button mat-raised-button color="primary" (click)="load()">Retry</button>
-    </div>
-  }
-
-  @if (!loading() && !error()) {
-    @if (tabs().length === 0) {
-      <div class="empty-state">
-        <mat-icon>receipt_long</mat-icon>
-        <p>No tabs yet. Open a new tab from the right panel.</p>
+  <mat-drawer-content>
+    <div class="tabs-container">
+      <div class="page-header">
+        <h2>Tabs</h2>
       </div>
-    } @else {
-      <table mat-table [dataSource]="tabs()" class="tabs-table">
 
-        <!-- Status -->
-        <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef>Status</th>
-          <td mat-cell *matCellDef="let tab">
-            <span class="status-badge" [class]="'status-' + tab.paymentStatus">
-              {{ tab.paymentStatus }}
-            </span>
-          </td>
-        </ng-container>
+      @if (loading()) {
+        <div class="loading"><mat-spinner diameter="40"></mat-spinner></div>
+      }
 
-        <!-- Guest -->
-        <ng-container matColumnDef="guest">
-          <th mat-header-cell *matHeaderCellDef>Guest</th>
-          <td mat-cell *matCellDef="let tab" class="guest-cell">{{ tab.guestName || '—' }}</td>
-        </ng-container>
+      @if (!loading() && error()) {
+        <div class="error-state">
+          <mat-icon>error_outline</mat-icon>
+          <p>Failed to load tabs.</p>
+          <button mat-raised-button color="primary" (click)="load()">Retry</button>
+        </div>
+      }
 
-        <!-- Card -->
-        <ng-container matColumnDef="card">
-          <th mat-header-cell *matHeaderCellDef>Card</th>
-          <td mat-cell *matCellDef="let tab">
-            @if (tab.preAuthCardType) {
-              <span class="card-badge" [class]="'card-badge--' + tab.preAuthCardType">{{ cardLabel(tab.preAuthCardType) }}</span>
-              <span class="card-last4">••{{ tab.preAuthCardLast4 }}</span>
-            } @else {
-              <span class="card-none">—</span>
-            }
-          </td>
-        </ng-container>
+      @if (!loading() && !error()) {
+        @if (tabs().length === 0) {
+          <div class="empty-state">
+            <mat-icon>receipt_long</mat-icon>
+            <p>No tabs yet. Open a new tab from the right panel.</p>
+          </div>
+        } @else {
+          <table mat-table [dataSource]="tabs()" class="tabs-table">
 
-        <!-- Opened -->
-        <ng-container matColumnDef="opened">
-          <th mat-header-cell *matHeaderCellDef>Opened</th>
-          <td mat-cell *matCellDef="let tab">{{ tab.openedAt | date:'d MMM, h:mm a' }}</td>
-        </ng-container>
+            <!-- Status -->
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <td mat-cell *matCellDef="let tab">
+                <span class="status-badge" [class]="'status-' + tab.paymentStatus">
+                  {{ tab.paymentStatus }}
+                </span>
+              </td>
+            </ng-container>
 
-        <!-- Items -->
-        <ng-container matColumnDef="items">
-          <th mat-header-cell *matHeaderCellDef>Items</th>
-          <td mat-cell *matCellDef="let tab">{{ tab.itemCount }}</td>
-        </ng-container>
+            <!-- Guest -->
+            <ng-container matColumnDef="guest">
+              <th mat-header-cell *matHeaderCellDef>Guest</th>
+              <td mat-cell *matCellDef="let tab" class="guest-cell">{{ tab.guestName || '—' }}</td>
+            </ng-container>
 
-        <!-- Total -->
-        <ng-container matColumnDef="total">
-          <th mat-header-cell *matHeaderCellDef>Total</th>
-          <td mat-cell *matCellDef="let tab" class="total-cell">
-            {{ tab.grandTotal | currency:'AUD':'symbol':'1.2-2' }}
-          </td>
-        </ng-container>
-
-        <!-- Amount Due -->
-        <ng-container matColumnDef="amountDue">
-          <th mat-header-cell *matHeaderCellDef>Amount Owing</th>
-          <td mat-cell *matCellDef="let tab" class="amount-due-cell">
-            {{ tab.amountRemaining | currency:'AUD':'symbol':'1.2-2' }}
-          </td>
-        </ng-container>
-
-        <!-- Actions -->
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef></th>
-          <td mat-cell *matCellDef="let tab">
-            @if (!isActive(tab.tabId)) {
-              <button
-                mat-button
-                color="primary"
-                [disabled]="loadingTabId() === tab.tabId"
-                (click)="switchToTab(tab)">
-                @if (loadingTabId() === tab.tabId) {
-                  <mat-spinner diameter="16"></mat-spinner>
+            <!-- Card -->
+            <ng-container matColumnDef="card">
+              <th mat-header-cell *matHeaderCellDef>Card</th>
+              <td mat-cell *matCellDef="let tab">
+                @if (tab.preAuthCardType) {
+                  <span class="card-badge" [class]="'card-badge--' + tab.preAuthCardType">{{ cardLabel(tab.preAuthCardType) }}</span>
+                  <span class="card-last4">••{{ tab.preAuthCardLast4 }}</span>
                 } @else {
-                  Switch to Tab
+                  <span class="card-none">—</span>
                 }
-              </button>
-            } @else {
-              <span class="current-label">Current</span>
-            }
-          </td>
-        </ng-container>
+              </td>
+            </ng-container>
 
-        <tr mat-header-row *matHeaderRowDef="columns"></tr>
-        <tr mat-row *matRowDef="let row; columns: columns;" [class.active-row]="isActive(row.tabId)"></tr>
-      </table>
-    }
-  }
-</div>
+            <!-- Opened -->
+            <ng-container matColumnDef="opened">
+              <th mat-header-cell *matHeaderCellDef>Opened</th>
+              <td mat-cell *matCellDef="let tab">{{ tab.openedAt | date:'d MMM, h:mm a' }}</td>
+            </ng-container>
+
+            <!-- Items -->
+            <ng-container matColumnDef="items">
+              <th mat-header-cell *matHeaderCellDef>Items</th>
+              <td mat-cell *matCellDef="let tab">{{ tab.itemCount }}</td>
+            </ng-container>
+
+            <!-- Total -->
+            <ng-container matColumnDef="total">
+              <th mat-header-cell *matHeaderCellDef>Total</th>
+              <td mat-cell *matCellDef="let tab" class="total-cell">
+                {{ tab.grandTotal | currency:'AUD':'symbol':'1.2-2' }}
+              </td>
+            </ng-container>
+
+            <!-- Amount Due -->
+            <ng-container matColumnDef="amountDue">
+              <th mat-header-cell *matHeaderCellDef>Amount Owing</th>
+              <td mat-cell *matCellDef="let tab" class="amount-due-cell">
+                {{ tab.amountRemaining | currency:'AUD':'symbol':'1.2-2' }}
+              </td>
+            </ng-container>
+
+            <!-- Actions -->
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef></th>
+              <td mat-cell *matCellDef="let tab">
+                @if (tab.paymentStatus === 'settled') {
+                  <button mat-button color="primary"
+                    [class.active-receipt]="receiptTabId() === tab.tabId"
+                    (click)="openReceipt(tab.tabId)">
+                    <mat-icon>receipt_long</mat-icon>
+                    Receipt
+                  </button>
+                } @else if (!isActive(tab.tabId)) {
+                  <button
+                    mat-button
+                    color="primary"
+                    [disabled]="loadingTabId() === tab.tabId"
+                    (click)="switchToTab(tab)">
+                    @if (loadingTabId() === tab.tabId) {
+                      <mat-spinner diameter="16"></mat-spinner>
+                    } @else {
+                      Switch to Tab
+                    }
+                  </button>
+                } @else {
+                  <span class="current-label">Current</span>
+                }
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="columns"></tr>
+            <tr mat-row *matRowDef="let row; columns: columns;" [class.active-row]="isActive(row.tabId)"></tr>
+          </table>
+        }
+      }
+    </div>
+  </mat-drawer-content>
+
+  <!-- Receipt flyout -->
+  <mat-drawer
+    position="end"
+    mode="over"
+    [opened]="receiptTabId() !== null"
+    (closed)="closeReceipt()"
+    class="receipt-drawer">
+
+    <div class="flyout-header">
+      <div class="flyout-title">
+        <mat-icon>receipt_long</mat-icon>
+        @if (receipt()) {
+          Receipt #{{ receipt()!.receiptNumber }}
+        } @else {
+          Receipt
+        }
+      </div>
+      <button mat-icon-button (click)="closeReceipt()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <div class="flyout-body">
+      @if (receiptLoading()) {
+        <div class="flyout-loading">
+          <mat-spinner diameter="36"></mat-spinner>
+          <p>Loading receipt…</p>
+        </div>
+      } @else if (receiptError()) {
+        <div class="flyout-error">
+          <mat-icon>error_outline</mat-icon>
+          <p>{{ receiptError() }}</p>
+        </div>
+      } @else if (receipt()) {
+
+        <div class="receipt-print">
+
+          <div class="r-header">
+            <div class="r-title">TAX INVOICE</div>
+            <div class="r-venue">{{ receipt()!.venueName }}</div>
+            <div class="r-meta">ABN: {{ receipt()!.abnPlaceholder }}</div>
+            <div class="r-meta">{{ receipt()!.issuedAt | date:'d MMM yyyy, h:mm a' }}</div>
+            <div class="r-meta r-number">Receipt #{{ receipt()!.receiptNumber }}</div>
+            @if (receipt()!.guestName) {
+              <div class="r-meta">Guest: {{ receipt()!.guestName }}</div>
+            }
+          </div>
+
+          <div class="r-rule"></div>
+
+          <div class="r-items-header">
+            <span class="rc-desc">DESCRIPTION</span>
+            <span class="rc-qty">QTY</span>
+            <span class="rc-unit">UNIT</span>
+            <span class="rc-total">TOTAL</span>
+          </div>
+
+          <div class="r-rule r-thin"></div>
+
+          @for (item of receipt()!.lineItems; track item.name) {
+            <div class="r-item">
+              <span class="rc-desc r-item-name">{{ item.name }}</span>
+              <span class="rc-qty">{{ item.quantity }}</span>
+              <span class="rc-unit">{{ item.unitPrice | currency:'AUD':'symbol':'1.2-2' }}</span>
+              <span class="rc-total">{{ item.lineTotal | currency:'AUD':'symbol':'1.2-2' }}</span>
+            </div>
+          }
+
+          @if (receipt()!.lineItems.length === 0) {
+            <div class="r-no-items">No items</div>
+          }
+
+          <div class="r-rule"></div>
+
+          <div class="r-total-line">
+            <span>Subtotal (excl. GST)</span>
+            <span>{{ receipt()!.subtotalExclGst | currency:'AUD':'symbol':'1.2-2' }}</span>
+          </div>
+          <div class="r-total-line r-gst">
+            <span>GST (10%)</span>
+            <span>{{ receipt()!.gstTotal | currency:'AUD':'symbol':'1.2-2' }}</span>
+          </div>
+          <div class="r-rule r-thin"></div>
+          <div class="r-total-line r-grand">
+            <span>TOTAL</span>
+            <span>{{ receipt()!.grandTotal | currency:'AUD':'symbol':'1.2-2' }}</span>
+          </div>
+          @if (receipt()!.tipTotal > 0) {
+            <div class="r-total-line r-tip">
+              <span>Tip</span>
+              <span>{{ receipt()!.tipTotal | currency:'AUD':'symbol':'1.2-2' }}</span>
+            </div>
+          }
+
+          <div class="r-rule"></div>
+
+          @for (p of receipt()!.payments; track $index) {
+            <div class="r-payment" [class.r-payment-tip]="p.isTip">
+              <span class="r-payment-label">
+                {{ p.method }}
+                @if (p.reference) { {{ p.reference }} }
+                @if (p.isTip) { <span class="r-tip-badge">TIP</span> }
+              </span>
+              <span>{{ p.amount | currency:'AUD':'symbol':'1.2-2' }}</span>
+            </div>
+          }
+
+          <div class="r-rule"></div>
+
+          <div class="r-footer">
+            <div class="r-paid">✓ PAID</div>
+            <div class="r-gst-note">All prices include GST where applicable</div>
+            <div class="r-gst-note">Tax Invoice issued under Australian Tax Law</div>
+          </div>
+
+        </div>
+
+      }
+    </div>
+
+  </mat-drawer>
+
+</mat-drawer-container>

@@ -9,6 +9,17 @@ export interface TabLineItem {
   unitPrice: number;
 }
 
+export interface TabPayment {
+  paymentId: string;
+  type: string;
+  method: string;
+  cardNumberMasked: string | null;
+  amount: number;
+  isTip: boolean;
+  status: string;
+  createdAt: string;
+}
+
 export interface Tab {
   tabId: string;
   bookingUniqueId: string | null;
@@ -20,6 +31,7 @@ export interface Tab {
   addedItems: TabLineItem[];
   grandTotal: number;
   amountRemaining: number;
+  payments: TabPayment[];
   paymentStatus: string;
   preAuthStatus: string;
   preAuthCardNumber: string | null;
@@ -33,6 +45,13 @@ export interface CreateTabRequest {
   guestName: string;
   guestEmail: string;
   guestPhone: string;
+}
+
+export interface AddPaymentRequest {
+  method: string;
+  amount: number;
+  tipAmount: number;
+  giftCardNumber?: string;
 }
 
 const SESSION_KEY = 'pos_active_tab';
@@ -110,6 +129,10 @@ export class TabStateService {
     return this.api.delete<void>(`/api/tabs/${tabId}`).pipe(
       tap(() => this.clearTab())
     );
+  }
+
+  applyTabUpdate(tab: Tab): void {
+    this.setTab(tab);
   }
 
   parkTab(): void {

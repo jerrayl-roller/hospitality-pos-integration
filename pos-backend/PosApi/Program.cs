@@ -33,7 +33,9 @@ builder.Services.AddScoped<IRollerApiClient, RollerApiClient>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IPaymentLockService, PaymentLockService>();
+builder.Services.AddScoped<IRollerGiftCardService, RollerGiftCardService>();
 builder.Services.AddScoped<TabService>();
+builder.Services.AddScoped<SettlementService>();
 
 builder.Services.AddCors(opts =>
     opts.AddDefaultPolicy(p => p

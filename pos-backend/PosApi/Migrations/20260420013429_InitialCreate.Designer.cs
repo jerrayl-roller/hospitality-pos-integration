@@ -45,6 +45,9 @@ namespace PosApi.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("IsTip")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Method")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");

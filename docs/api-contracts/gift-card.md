@@ -91,17 +91,15 @@ Content-Type: application/json
 ```json
 {
   "amount": 41.80,
-  "currency": "AUD",
-  "idempotencyKey": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d-giftcard",
-  "reference": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
+  "transactionId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+  "bookingUniqueId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
 }
 ```
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `amount` | number | Yes | Decimal float to deduct (e.g. `41.80`). Must equal tab `grandTotal` for prototype (no split payment). |
-| `currency` | string | Yes | ISO 4217. Fixed `"AUD"`. |
-| `idempotencyKey` | string | Yes | Recommended format: `{tabId}-giftcard`. Safe to retry. |
+| `idempotencyKey` | string | Yes | Recommended format: `{tabId}`. Safe to retry. |
 | `reference` | string | Yes | POS `tabId`. Stored by ROLLER for traceability. |
 
 ### Responses
@@ -190,10 +188,10 @@ Content-Type: application/json
 
 ```json
 {
-  "originalTransactionId": "gc_txn_7c9e6679-7425-40de-944b-e07fc1f90ae7",
+  "originalTransactionId": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
   "amount": 41.80,
-  "currency": "AUD",
-  "idempotencyKey": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d-giftcard-refund"
+  "bookingUniqueId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+  "transactionId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
 }
 ```
 

@@ -23,17 +23,6 @@ This keeps the prototype safe without requiring automated rollback logic whose b
 
 ---
 
-### OQ6 — POS server crash before settlement: is there a TTL on the payment lock?
-
-**Assumption:** ROLLER's payment lock endpoint (a new endpoint to be designed in Phase 0 / built in Phase 3) will **not implement a server-side TTL** in the prototype, as the TTL policy is a product decision outside the scope of this build. Instead, the POS will implement a **safety valve on the backend side**:
-
-- A background `IHostedService` running in the .NET API checks, on startup and every 30 minutes, for tabs in `open` or `walkout_pending` status whose `openedAt` timestamp is older than 24 hours.
-- Such tabs are flagged in the database with a `stuckLock` boolean and surfaced in a dedicated **Stuck Locks** admin view in the POS.
-- A manual **Force Release** button in that view calls the ROLLER unlock endpoint directly, bypassing normal settlement flow.
-- The assumption must be revisited with the ROLLER product team to determine whether a TTL or heartbeat mechanism should be added to the lock endpoint before production.
-
----
-
 ### OQ8 — Can a ROLLER operator manually release a stuck payment lock from within ROLLER?
 
 **Assumption:** No such release mechanism exists in ROLLER today (the lock endpoint is being built fresh). The prototype will **not add one to the ROLLER side** — a ROLLER-side UI override is out of scope. Instead, the POS exposes an **admin REST endpoint** (`DELETE /api/admin/tabs/{tabId}/lock`) protected by a hardcoded admin token (config-driven), which calls the ROLLER unlock endpoint. This gives the venue manager or ROLLER support team a direct escape hatch without needing a ROLLER-side UI. The assumption is that this is acceptable for a prototype but a ROLLER-side override should be scoped for production.
@@ -357,7 +346,6 @@ public class Tab
     public string? PreAuthCardNumber { get; set; }
     public string PreAuthStatus { get; set; } = "none";
     public string PaymentStatus { get; set; } = "open";    // open|settled|failed|walkout_pending
-    public bool StuckLock { get; set; }                     // OQ6 safety valve
     public DateTime OpenedAt { get; set; }
     public DateTime? SettledAt { get; set; }
     public ICollection<Payment> Payments { get; set; } = new List<Payment>();
@@ -1020,7 +1008,7 @@ Apply to all phases:
 - **Error states:** Every API call has a visible, non-crashing error state. The `GlobalExceptionMiddleware` (T1a.1) ensures no blank 500 pages.
 - **Empty states:** Catalogue with no F&B products, search with no results, tab with no items — all have clear empty-state messages.
 - **Confirmation dialogs:** Walk-out, till close, force release, close tab — all require confirmation.
-- **Tab status badges:** Color-coded status chips throughout: `open` (blue), `settled` (green), `failed` (red), `walkout_pending` (amber), `stuckLock` (dark red).
+- **Tab status badges:** Color-coded status chips throughout: `open` (blue), `settled` (green), `failed` (red).
 - **Responsiveness:** Ensure the POS is usable on a 1366×768 tablet landscape (typical venue tablet). Not mobile.
 - **ROLLER API error handling:** Every `RollerApiException` produces a visible, descriptive toast. The exception must include the ROLLER error body for debuggability.
 

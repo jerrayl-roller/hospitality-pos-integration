@@ -1,8 +1,9 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
@@ -78,10 +79,13 @@ export class BookingSearchComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
 
   readonly searchControl = new FormControl('');
-  results: BookingSummary[] = [];
-  loading = false;
-  searched = false;
-  importingId: string | null = null;
+  readonly results = signal<BookingSummary[]>([]);
+  readonly loading = signal(false);
+  readonly searched = signal(false);
+  readonly importingId = signal<string | null>(null);
+
+  private readonly _searchValue = toSignal(this.searchControl.valueChanges, { initialValue: '' });
+  readonly queryTooShort = computed(() => { const v = this._searchValue() ?? ''; return v.length > 0 && v.length < 3; });
 
   private sub!: Subscription;
 
@@ -91,8 +95,8 @@ export class BookingSearchComponent implements OnInit, OnDestroy {
       distinctUntilChanged()
     ).subscribe(q => {
       if (!q || q.length < 3) {
-        this.results = [];
-        this.searched = false;
+        this.results.set([]);
+        this.searched.set(false);
         return;
       }
       this.doSearch(q);
@@ -103,28 +107,23 @@ export class BookingSearchComponent implements OnInit, OnDestroy {
     this.sub?.unsubscribe();
   }
 
-  get queryTooShort(): boolean {
-    const v = this.searchControl.value ?? '';
-    return v.length > 0 && v.length < 3;
-  }
-
   clearSearch(): void {
     this.searchControl.setValue('');
-    this.results = [];
-    this.searched = false;
+    this.results.set([]);
+    this.searched.set(false);
   }
 
   private doSearch(q: string): void {
-    this.loading = true;
-    this.searched = true;
+    this.loading.set(true);
+    this.searched.set(true);
     this.api.get<BookingSummary[]>(`/api/bookings/search?q=${encodeURIComponent(q)}`).subscribe({
-      next: res => { this.results = res; this.loading = false; },
-      error: () => { this.loading = false; }
+      next: res => { this.results.set(res); this.loading.set(false); },
+      error: () => { this.loading.set(false); }
     });
   }
 
   importBooking(booking: BookingSummary): void {
-    this.importingId = booking.bookingUniqueId;
+    this.importingId.set(booking.bookingUniqueId);
 
     const guest$ = booking.customerId
       ? this.api.get<GuestDetails>(`/api/guests/${booking.customerId}`).pipe(catchError(() => of(null)))
@@ -139,7 +138,7 @@ export class BookingSearchComponent implements OnInit, OnDestroy {
         data: { guestName, guestEmail: guest?.email ?? '', guestPhone: guest?.phone ?? '' } satisfies GuestConfirmData
       }).afterClosed().subscribe((result: GuestConfirmData | null | undefined) => {
         if (result == null) {
-          this.importingId = null;
+          this.importingId.set(null);
           return;
         }
 
@@ -150,7 +149,7 @@ export class BookingSearchComponent implements OnInit, OnDestroy {
           guestPhone: result.guestPhone || null
         }).subscribe({
           next: tab => {
-            this.importingId = null;
+            this.importingId.set(null);
             this.tabState.refreshTab(tab.tabId).subscribe(() => {
               this.dialog.open(PreAuthDialogComponent, {
                 data: { cardNumber: tab.preAuthCardNumber, cardType: tab.preAuthCardType },
@@ -162,7 +161,7 @@ export class BookingSearchComponent implements OnInit, OnDestroy {
             });
           },
           error: (err: HttpErrorResponse) => {
-            this.importingId = null;
+            this.importingId.set(null);
             const body = err.error as ErrorBody;
             if (err.status === 409 && body?.error === 'tab_already_open' && body.existingTabId) {
               this.notification.info('A tab is already open for this booking.');
@@ -182,7 +181,7 @@ export class BookingSearchComponent implements OnInit, OnDestroy {
         });
       });
       },
-      error: () => { this.importingId = null; }
+      error: () => { this.importingId.set(null); }
     });
   }
 

@@ -9,6 +9,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { TabStateService, Tab } from '../../core/tab-state.service';
 import { NewTabDialogComponent, NewTabResult } from './new-tab-dialog';
 import { PreAuthDialogComponent } from '../booking-search/pre-auth-dialog';
+import { SettlementDialogComponent } from '../payment/settlement-dialog';
 
 @Component({
   selector: 'app-tab-panel',
@@ -72,6 +73,17 @@ export class TabPanelComponent {
     this.tabState.discardChanges()?.subscribe({
       next: () => this.discardingChanges = false,
       error: () => this.discardingChanges = false
+    });
+  }
+
+  settleTab(): void {
+    const tab = this.tabState.currentTab;
+    if (!tab) return;
+    this.dialog.open(SettlementDialogComponent, {
+      data: tab,
+      width: '600px',
+      maxHeight: '92vh',
+      disableClose: false
     });
   }
 

@@ -5,7 +5,7 @@ import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { TabPanelComponent } from './features/tab/tab-panel';
 
-const PANEL_HIDDEN_ROUTES = ['/booking-search', '/admin'];
+const PANEL_HIDDEN_ROUTES = ['/booking-search', '/admin', '/tabs'];
 
 @Component({
   selector: 'app-root',
@@ -26,6 +26,7 @@ export class App {
   private readonly router = inject(Router);
 
   get showTabPanel(): boolean {
-    return !PANEL_HIDDEN_ROUTES.includes(this.router.url);
+    const path = this.router.url.split('?')[0];
+    return !PANEL_HIDDEN_ROUTES.includes(path);
   }
 }

@@ -79,13 +79,18 @@
         <span class="owing-amount">{{ tab.amountRemaining | currency:'AUD':'symbol':'1.2-2' }}</span>
       </div>
       <mat-divider></mat-divider>
-      @if (tabState.hasChanges) {
-        <div class="footer-actions">
-          <button mat-raised-button color="primary" class="park-btn" (click)="parkTab()">
+      <div class="footer-actions">
+        @if (tabState.hasChanges) {
+          <button mat-stroked-button color="primary" class="park-btn" (click)="parkTab()">
             Add Items
           </button>
-        </div>
-      }
+        }
+        <button mat-raised-button color="primary" class="settle-btn"
+          (click)="settleTab()">
+          <mat-icon>point_of_sale</mat-icon>
+          Settle Tab
+        </button>
+      </div>
     </div>
   } @else {
     <!-- No active tab -->

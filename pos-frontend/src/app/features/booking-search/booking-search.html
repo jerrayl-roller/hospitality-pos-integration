@@ -13,27 +13,27 @@
         <mat-icon>close</mat-icon>
       </button>
     }
-    @if (queryTooShort) {
+    @if (queryTooShort()) {
       <mat-hint>Enter at least 3 characters</mat-hint>
     }
   </mat-form-field>
 
-  @if (loading) {
+  @if (loading()) {
     <div class="loading-state">
       <mat-spinner diameter="36"></mat-spinner>
     </div>
   }
 
-  @if (!loading && searched && results.length === 0) {
+  @if (!loading() && searched() && results().length === 0) {
     <div class="empty-state">
       <mat-icon>search_off</mat-icon>
       <p>No bookings found. Try a different name, email, or booking ID.</p>
     </div>
   }
 
-  @if (!loading && results.length > 0) {
+  @if (!loading() && results().length > 0) {
     <div class="results-list">
-      @for (booking of results; track booking.bookingUniqueId) {
+      @for (booking of results(); track booking.bookingUniqueId) {
         <mat-card class="booking-card">
           <mat-card-content>
             <div class="card-main">
@@ -77,9 +77,9 @@
                   <button
                     mat-raised-button
                     color="primary"
-                    [disabled]="importingId !== null"
+                    [disabled]="importingId() !== null"
                     (click)="importBooking(booking)">
-                    @if (importingId === booking.bookingUniqueId) {
+                    @if (importingId() === booking.bookingUniqueId) {
                       <mat-spinner diameter="16"></mat-spinner>
                     } @else {
                       Import

@@ -38,6 +38,44 @@ public record BookingSummaryDto(
     bool IsImported
 );
 
+public record AddPaymentRequest(
+    string Method,       // pre_auth_card | new_card | cash | gift_card
+    decimal Amount,
+    decimal TipAmount,
+    string? GiftCardNumber   // only required for gift_card
+);
+
+public class PaymentDto
+{
+    public Guid PaymentId { get; init; }
+    public string Type { get; init; } = "";
+    public string Method { get; init; } = "";
+    public string? CardNumberMasked { get; init; }
+    public decimal Amount { get; init; }
+    public bool IsTip { get; init; }
+    public string Status { get; init; } = "";
+    public DateTime CreatedAt { get; init; }
+
+    public static PaymentDto FromPayment(Payment p) => new()
+    {
+        PaymentId = p.PaymentId,
+        Type = p.Type,
+        Method = p.Method,
+        CardNumberMasked = MaskCard(p.CardNumber),
+        Amount = p.Amount,
+        IsTip = p.IsTip,
+        Status = p.Status,
+        CreatedAt = p.CreatedAt
+    };
+
+    private static string? MaskCard(string? card)
+    {
+        if (card is null) return null;
+        var parts = card.Split('-');
+        return parts.Length == 4 ? $"XXXX-XXXX-XXXX-{parts[3]}" : card;
+    }
+}
+
 public record TabSummaryDto(
     Guid TabId,
     string? BookingUniqueId,
@@ -57,7 +95,7 @@ public record TabSummaryDto(
         var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         var added = JsonSerializer.Deserialize<List<TabLineItem>>(tab.AddedItemsJson, opts) ?? [];
         var imported = JsonSerializer.Deserialize<List<TabLineItem>>(tab.ImportedItemsJson, opts) ?? [];
-        var paid = tab.Payments.Where(p => p.Type != "pre_auth" && p.Status == "success").Sum(p => p.Amount);
+        var paid = tab.Payments.Where(p => p.Type != "pre_auth" && p.Status == "success" && !p.IsTip).Sum(p => p.Amount);
         var preAuth = tab.Payments.FirstOrDefault(p => p.Type == "pre_auth");
         var last4 = preAuth?.CardNumber?.Split('-').LastOrDefault();
         return new TabSummaryDto(tab.TabId, tab.BookingUniqueId, tab.BookingReference, tab.GuestName, added.Count + imported.Count, tab.GrandTotal, tab.GrandTotal - paid, preAuth?.Method, last4, tab.PaymentStatus, tab.OpenedAt);
@@ -90,6 +128,7 @@ public class TabDto
     public List<TabLineItem> AddedItems { get; init; } = [];
     public decimal GrandTotal { get; init; }
     public decimal AmountRemaining { get; init; }
+    public List<PaymentDto> Payments { get; init; } = [];
     public string? PreAuthCardType { get; init; }
     public string PaymentStatus { get; init; } = "open";
     public string PreAuthStatus { get; init; } = "none";
@@ -104,7 +143,7 @@ public class TabDto
         var addedItems = JsonSerializer.Deserialize<List<TabLineItem>>(tab.AddedItemsJson, opts) ?? [];
         var importedItems = JsonSerializer.Deserialize<List<TabLineItem>>(tab.ImportedItemsJson, opts) ?? [];
 
-        var paid = tab.Payments.Where(p => p.Type != "pre_auth" && p.Status == "success").Sum(p => p.Amount);
+        var paid = tab.Payments.Where(p => p.Type != "pre_auth" && p.Status == "success" && !p.IsTip).Sum(p => p.Amount);
         var preAuth = tab.Payments.FirstOrDefault(p => p.Type == "pre_auth");
         return new TabDto
         {
@@ -118,6 +157,11 @@ public class TabDto
             AddedItems = addedItems,
             GrandTotal = tab.GrandTotal,
             AmountRemaining = tab.GrandTotal - paid,
+            Payments = tab.Payments
+                .Where(p => p.Type != "pre_auth")
+                .OrderBy(p => p.CreatedAt)
+                .Select(PaymentDto.FromPayment)
+                .ToList(),
             PreAuthCardType = preAuth?.Method,
             PaymentStatus = tab.PaymentStatus,
             PreAuthStatus = tab.PreAuthStatus,

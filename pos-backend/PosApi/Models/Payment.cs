@@ -11,6 +11,7 @@ public class Payment
     public decimal Amount { get; set; }
     public string Currency { get; set; } = "AUD";
     public string Status { get; set; } = "";
+    public bool IsTip { get; set; } = false;
     public string RollerPushStatus { get; set; } = "not_pushed";
     public string? RollerGiftCardTransactionId { get; set; }
     public DateTime CreatedAt { get; set; }

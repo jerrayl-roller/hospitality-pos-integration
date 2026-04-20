@@ -48,6 +48,7 @@ namespace PosApi.Migrations
                     CardNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Amount = table.Column<decimal>(type: "decimal(18,4)", precision: 18, scale: 4, nullable: false),
                     Currency = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    IsTip = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     RollerPushStatus = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     RollerGiftCardTransactionId = table.Column<string>(type: "nvarchar(max)", nullable: true),

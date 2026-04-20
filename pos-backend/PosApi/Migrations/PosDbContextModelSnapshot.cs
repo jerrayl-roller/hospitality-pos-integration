@@ -42,6 +42,9 @@ namespace PosApi.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("IsTip")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Method")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -85,11 +88,15 @@ namespace PosApi.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("BookingReference")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("BookingUniqueId")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("BookingReference")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<decimal>("GrandTotal")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<string>("GuestEmail")
                         .HasColumnType("nvarchar(max)");
@@ -99,10 +106,6 @@ namespace PosApi.Migrations
 
                     b.Property<string>("GuestPhone")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("GrandTotal")
-                        .HasPrecision(18, 4)
-                        .HasColumnType("decimal(18,4)");
 
                     b.Property<bool>("HasPendingConflict")
                         .HasColumnType("bit");
