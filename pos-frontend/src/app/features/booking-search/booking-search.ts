@@ -33,7 +33,7 @@ export interface GuestDetails {
 }
 
 export interface BookingSummary {
-  bookingId: string;
+  bookingUniqueId: string;
   bookingReference: string | null;
   guestName: string | null;
   bookingDate: string | null;
@@ -45,9 +45,10 @@ export interface BookingSummary {
   isImported: boolean;
 }
 
-interface ConflictBody {
+interface ErrorBody {
   error: string;
   existingTabId?: string;
+  detail?: string;
 }
 
 @Component({
@@ -123,7 +124,7 @@ export class BookingSearchComponent implements OnInit, OnDestroy {
   }
 
   importBooking(booking: BookingSummary): void {
-    this.importingId = booking.bookingId;
+    this.importingId = booking.bookingUniqueId;
 
     const guest$ = booking.customerId
       ? this.api.get<GuestDetails>(`/api/guests/${booking.customerId}`).pipe(catchError(() => of(null)))
@@ -143,7 +144,7 @@ export class BookingSearchComponent implements OnInit, OnDestroy {
         }
 
         this.api.post<Tab>('/api/tabs/from-booking', {
-          bookingId: booking.bookingId,
+          bookingUniqueId: booking.bookingUniqueId,
           guestName: result.guestName || null,
           guestEmail: result.guestEmail || null,
           guestPhone: result.guestPhone || null
@@ -162,7 +163,7 @@ export class BookingSearchComponent implements OnInit, OnDestroy {
           },
           error: (err: HttpErrorResponse) => {
             this.importingId = null;
-            const body = err.error as ConflictBody;
+            const body = err.error as ErrorBody;
             if (err.status === 409 && body?.error === 'tab_already_open' && body.existingTabId) {
               this.notification.info('A tab is already open for this booking.');
               this.tabState.refreshTab(body.existingTabId).subscribe(() => {
@@ -172,6 +173,8 @@ export class BookingSearchComponent implements OnInit, OnDestroy {
               this.notification.error('This booking has already been imported.');
             } else if (err.status === 409 && body?.error === 'booking_fully_prepaid') {
               this.notification.info('This booking has been fully paid. No tab required.');
+            } else if (err.status === 503 && body?.error === 'payment_lock_failed') {
+              this.notification.error('Could not lock this booking. Failed to contact external system. Please try again or contact support.');
             } else {
               this.notification.error('Failed to import booking. Please try again.');
             }

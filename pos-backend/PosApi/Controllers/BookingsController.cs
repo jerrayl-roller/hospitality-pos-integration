@@ -18,15 +18,6 @@ public class BookingsController(IBookingService bookingService, IRollerApiClient
         return Ok(results);
     }
 
-    // Temporary debug endpoint — remove before Phase 3
-    [HttpGet("search/raw")]
-    public async Task<IActionResult> SearchRaw([FromQuery] string? q, CancellationToken ct)
-    {
-        if (string.IsNullOrWhiteSpace(q)) return BadRequest();
-        var raw = await rollerApi.GetAsync<JsonElement>($"/bookings?keywords={Uri.EscapeDataString(q)}", ct);
-        return Ok(raw);
-    }
-
     [HttpGet("/api/guests/{customerId:int}")]
     public async Task<IActionResult> GetGuestDetails(int customerId, CancellationToken ct)
     {

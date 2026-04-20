@@ -16,7 +16,11 @@ namespace PosApi.Migrations
                 columns: table => new
                 {
                     TabId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    BookingId = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    BookingUniqueId = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    BookingReference = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    GuestName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    GuestEmail = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    GuestPhone = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ImportedItemsJson = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     AddedItemsJson = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     AuditLogJson = table.Column<string>(type: "nvarchar(max)", nullable: false),
@@ -24,8 +28,6 @@ namespace PosApi.Migrations
                     PreAuthCardNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     PreAuthStatus = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     PaymentStatus = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    RollerLockId = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    StuckLock = table.Column<bool>(type: "bit", nullable: false),
                     HasPendingConflict = table.Column<bool>(type: "bit", nullable: false),
                     OpenedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     SettledAt = table.Column<DateTime>(type: "datetime2", nullable: true)
@@ -71,11 +73,8 @@ namespace PosApi.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "Payments");
-
-            migrationBuilder.DropTable(
-                name: "Tabs");
+            migrationBuilder.DropTable(name: "Payments");
+            migrationBuilder.DropTable(name: "Tabs");
         }
     }
 }

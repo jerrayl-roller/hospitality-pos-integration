@@ -3,7 +3,7 @@ namespace PosApi.Models;
 public class Tab
 {
     public Guid TabId { get; set; }
-    public string? BookingId { get; set; }
+    public string? BookingUniqueId { get; set; }
     public string? BookingReference { get; set; }
     public string? GuestName { get; set; }
     public string? GuestEmail { get; set; }
@@ -15,8 +15,6 @@ public class Tab
     public string? PreAuthCardNumber { get; set; }
     public string PreAuthStatus { get; set; } = "none";
     public string PaymentStatus { get; set; } = "open";
-    public string? RollerLockId { get; set; }
-    public bool StuckLock { get; set; }
     public bool HasPendingConflict { get; set; }
     public DateTime OpenedAt { get; set; }
     public DateTime? SettledAt { get; set; }

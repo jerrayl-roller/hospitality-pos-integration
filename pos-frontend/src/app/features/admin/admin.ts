@@ -25,8 +25,10 @@ export class AdminComponent {
 
   resyncing = signal(false);
   clearing = signal(false);
+  releasingLocks = signal(false);
   resyncResult = signal<string | null>(null);
   clearResult = signal<string | null>(null);
+  lockReleaseResult = signal<{ released: string[]; failed: { bookingUniqueId: string; error: string }[] } | null>(null);
 
   confirmResync(): void {
     this.dialog.open(ConfirmDialogComponent, {
@@ -39,6 +41,20 @@ export class AdminComponent {
       width: '420px'
     }).afterClosed().subscribe(confirmed => {
       if (confirmed) this.runResync();
+    });
+  }
+
+  confirmReleaseLocks(): void {
+    this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Force Release All Locks',
+        message: 'This will call the ROLLER payment-lock release endpoint for every booking-linked tab in the system. Use this to clean up locks after a reset or crash. Continue?',
+        confirmLabel: 'Release All Locks',
+        confirmColor: 'warn'
+      },
+      width: '420px'
+    }).afterClosed().subscribe(confirmed => {
+      if (confirmed) this.runReleaseLocks();
     });
   }
 
@@ -66,6 +82,22 @@ export class AdminComponent {
         this.notifications.info('Product cache cleared. Will resync on next catalogue load.');
       },
       error: () => this.resyncing.set(false)
+    });
+  }
+
+  private runReleaseLocks(): void {
+    this.releasingLocks.set(true);
+    this.lockReleaseResult.set(null);
+    this.api.delete<{ released: string[]; failed: { bookingUniqueId: string; error: string }[] }>('/api/admin/tabs/locks').subscribe({
+      next: res => {
+        this.releasingLocks.set(false);
+        this.lockReleaseResult.set(res);
+        const msg = res.failed.length === 0
+          ? `Released ${res.released.length} lock(s) successfully.`
+          : `Released ${res.released.length} lock(s). ${res.failed.length} failed — see details below.`;
+        res.failed.length > 0 ? this.notifications.error(msg) : this.notifications.info(msg);
+      },
+      error: () => this.releasingLocks.set(false)
     });
   }
 

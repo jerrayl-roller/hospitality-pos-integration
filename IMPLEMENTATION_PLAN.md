@@ -609,41 +609,14 @@ Before creating a tab from a booking, check whether an open tab already exists f
 
 **Goal:** Design and build the ROLLER-side payment lock/unlock endpoint, then wire it into the POS booking import flow.
 
-**Critical dependency:** The ROLLER-side endpoint must be built (or a realistic stub server must be running) before full integration testing can occur. The contracts from Phase 0 (T0.4) must be approved before this phase begins.
-
 ### Tasks
 
-#### T3.1 — ROLLER-side: build payment lock endpoint (ROLLER team task)
-
-> **Note:** This is work for the ROLLER backend team, not the POS codebase. It is listed here because the POS team must coordinate the timeline and cannot complete T3.3 without it.
-
-Implement `POST /api/v1/bookings/{bookingId}/payment-lock` per the contract in `docs/api-contracts/payment-lock.md`.
-
-Requirements:
-- Store lock state on the ROLLER booking record (new `paymentLock` object: `{ lockId, lockedBySystem, lockedByReference, lockedAt, status }`).
-- Non-payment fields (time slot, guest count, notes, capacity) must remain writable while `status = "locked"`.
-- Payment fields (amount, payment method changes, refund initiation — confirm exact field list with ROLLER team) are blocked while locked.
-- Refund path must remain accessible (confirm with ROLLER product team — this may mean "refund is accessible but also requires lock awareness").
-- Return `409` if booking is already locked by a different `lockedByReference`.
-
-Implement `DELETE /api/v1/bookings/{bookingId}/payment-lock` per the contract.
-
-#### T3.2 — ROLLER stub server (POS team — enables parallel development)
-
-While ROLLER builds the real endpoint, create a minimal ASP.NET Core stub server (`PosApi.Stubs` project or a separate `stub-server/` folder) that:
-- Implements the payment lock and unlock contracts exactly.
-- Stores lock state in memory (dictionary keyed by `bookingId`).
-- Returns the correct 200, 409, 404, and 403 responses.
-
-Configure the backend to point at the stub server via `appsettings.Development.json` when `Roller:UseLockStub = true`. The stub is removed (or disabled) when the real ROLLER endpoint is live.
-
-#### T3.3 — POS backend: integrate payment lock
+#### T3.1 — POS backend: integrate payment lock
 
 Modify the `POST /api/tabs/from-booking` flow (T2.2) to:
 
 1. Attempt booking import and create the `Tab` record in a pending state.
-2. Call `POST /api/v1/bookings/{bookingId}/payment-lock` with `lockedByReference = tabId`.
-3. Store the returned `lockId` on the `Tab` record (add `RollerLockId` column via new EF migration).
+2. Call `POST /api/v1/bookings/{bookingId}/payment-lock` 
 4. If the lock call fails:
    - Delete the pending tab record.
    - Return `503` to the UI with `{ "error": "payment_lock_failed", "detail": "..." }`.
@@ -652,38 +625,21 @@ Modify the `POST /api/tabs/from-booking` flow (T2.2) to:
 
 This makes lock acquisition atomic with tab creation from the UI's perspective.
 
-#### T3.4 — POS backend: stuck lock background service (OQ6)
-
-Create `Services/StuckLockMonitorService.cs` implementing `BackgroundService`:
-- Runs on startup + every 30 minutes.
-- Queries for tabs where `paymentStatus IN ('open', 'walkout_pending')` and `openedAt < NOW() - 24h` and `stuckLock = false`.
-- Sets `stuckLock = true` on each found tab.
-- Logs a warning per tab. (In production this would alert on-call; for the prototype, the log is sufficient.)
-
-#### T3.5 — POS backend: admin force-release endpoint (OQ8)
+#### T3.2 — POS backend: admin force-release endpoint (OQ8)
 
 `DELETE /api/admin/tabs/{tabId}/lock`
 
 - Requires `Authorization: Bearer {AdminToken}` header (token from `appsettings`).
-- Calls the ROLLER unlock endpoint with `reason = "manual_override"`.
-- Sets `tab.StuckLock = false`, `tab.PaymentStatus = "failed"` (tab is dead; no further actions possible).
-- Records an audit log entry.
+- Calls the ROLLER unlock endpoint for all tabs in the system
 
-#### T3.6 — Frontend: stuck lock admin view
-
-Route: `/admin/stuck-locks` (not linked from main nav — direct URL access only)
-
-- Lists all tabs with `stuckLock = true`.
-- "Force Release Lock" button per row — calls the admin endpoint with the admin token (entered once via a prompt when the admin page loads and stored in `sessionStorage`).
 
 **ROLLER Endpoints Used:**
 
 | Endpoint | Status |
 |----------|--------|
-| POST /bookings/{id}/payment-lock | New — real (or stub from T3.2) |
-| DELETE /bookings/{id}/payment-lock | New — real (or stub from T3.2) |
+| POST /bookings/{id}/payment-lock | New |
+| DELETE /bookings/{id}/payment-lock | New  |
 
-**Effort:** 3–4 days (parallel: ROLLER team builds real endpoint; POS team builds stub and integration in ~2 days, then tests against real endpoint ~1 day)
 
 ### Phase 3 Approval Gate
 

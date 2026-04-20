@@ -10,7 +10,8 @@ import { TabStateService, Tab } from '../../core/tab-state.service';
 
 export interface TabSummary {
   tabId: string;
-  bookingId: string | null;
+  bookingUniqueId: string | null;
+  bookingReference: string | null;
   guestName: string | null;
   itemCount: number;
   grandTotal: number;

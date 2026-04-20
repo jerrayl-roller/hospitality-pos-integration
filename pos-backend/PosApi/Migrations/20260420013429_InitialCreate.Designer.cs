@@ -88,7 +88,19 @@ namespace PosApi.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("BookingId")
+                    b.Property<string>("BookingUniqueId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("BookingReference")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("GuestEmail")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("GuestName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("GuestPhone")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("GrandTotal")
@@ -116,14 +128,8 @@ namespace PosApi.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("RollerLockId")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime?>("SettledAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<bool>("StuckLock")
-                        .HasColumnType("bit");
 
                     b.HasKey("TabId");
 

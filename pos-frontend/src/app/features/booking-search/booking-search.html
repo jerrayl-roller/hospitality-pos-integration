@@ -33,14 +33,14 @@
 
   @if (!loading && results.length > 0) {
     <div class="results-list">
-      @for (booking of results; track booking.bookingId) {
+      @for (booking of results; track booking.bookingUniqueId) {
         <mat-card class="booking-card">
           <mat-card-content>
             <div class="card-main">
               <div class="booking-info">
                 <div class="guest-name">{{ booking.guestName || 'Unnamed Booking' }}</div>
                 <div class="booking-meta">
-                  <span class="booking-ref">{{ booking.bookingReference || booking.bookingId }}</span>
+                  <span class="booking-ref">{{ booking.bookingReference || booking.bookingUniqueId }}</span>
                   @if (booking.bookingDate) {
                     <span class="separator">·</span>
                     <span class="booking-date">{{ booking.bookingDate | date:'d MMM yyyy' }}</span>
@@ -79,7 +79,7 @@
                     color="primary"
                     [disabled]="importingId !== null"
                     (click)="importBooking(booking)">
-                    @if (importingId === booking.bookingId) {
+                    @if (importingId === booking.bookingUniqueId) {
                       <mat-spinner diameter="16"></mat-spinner>
                     } @else {
                       Import

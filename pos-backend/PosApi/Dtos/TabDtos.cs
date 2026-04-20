@@ -10,7 +10,7 @@ public record CreateTabRequest(
 );
 
 public record ImportBookingRequest(
-    string BookingId,
+    string BookingUniqueId,
     string? GuestName,
     string? GuestEmail,
     string? GuestPhone
@@ -26,7 +26,7 @@ public record GuestDetailsDto(
 public record BookingItemPreview(string ProductName, int Quantity);
 
 public record BookingSummaryDto(
-    string BookingId,
+    string BookingUniqueId,
     string? BookingReference,
     string? GuestName,
     string? BookingDate,
@@ -40,7 +40,8 @@ public record BookingSummaryDto(
 
 public record TabSummaryDto(
     Guid TabId,
-    string? BookingId,
+    string? BookingUniqueId,
+    string? BookingReference,
     string? GuestName,
     int ItemCount,
     decimal GrandTotal,
@@ -59,7 +60,7 @@ public record TabSummaryDto(
         var paid = tab.Payments.Where(p => p.Type != "pre_auth" && p.Status == "success").Sum(p => p.Amount);
         var preAuth = tab.Payments.FirstOrDefault(p => p.Type == "pre_auth");
         var last4 = preAuth?.CardNumber?.Split('-').LastOrDefault();
-        return new TabSummaryDto(tab.TabId, tab.BookingId, tab.GuestName, added.Count + imported.Count, tab.GrandTotal, tab.GrandTotal - paid, preAuth?.Method, last4, tab.PaymentStatus, tab.OpenedAt);
+        return new TabSummaryDto(tab.TabId, tab.BookingUniqueId, tab.BookingReference, tab.GuestName, added.Count + imported.Count, tab.GrandTotal, tab.GrandTotal - paid, preAuth?.Method, last4, tab.PaymentStatus, tab.OpenedAt);
     }
 }
 
@@ -80,7 +81,8 @@ public record TabLineItem(
 public class TabDto
 {
     public Guid TabId { get; init; }
-    public string? BookingId { get; init; }
+    public string? BookingUniqueId { get; init; }
+    public string? BookingReference { get; init; }
     public string? GuestName { get; init; }
     public string? GuestEmail { get; init; }
     public string? GuestPhone { get; init; }
@@ -107,7 +109,8 @@ public class TabDto
         return new TabDto
         {
             TabId = tab.TabId,
-            BookingId = tab.BookingId,
+            BookingUniqueId = tab.BookingUniqueId,
+            BookingReference = tab.BookingReference,
             GuestName = tab.GuestName,
             GuestEmail = tab.GuestEmail,
             GuestPhone = tab.GuestPhone,

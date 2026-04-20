@@ -15,8 +15,6 @@ builder.Configuration["Roller:ClientId"] = Environment.GetEnvironmentVariable("R
     ?? builder.Configuration["Roller:ClientId"];
 builder.Configuration["Roller:ClientSecret"] = Environment.GetEnvironmentVariable("ROLLER_CLIENT_SECRET")
     ?? builder.Configuration["Roller:ClientSecret"];
-builder.Configuration["AdminToken"] = Environment.GetEnvironmentVariable("ADMIN_TOKEN")
-    ?? builder.Configuration["AdminToken"];
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -34,6 +32,7 @@ builder.Services.AddSingleton<RollerTokenService>();
 builder.Services.AddScoped<IRollerApiClient, RollerApiClient>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
+builder.Services.AddScoped<IPaymentLockService, PaymentLockService>();
 builder.Services.AddScoped<TabService>();
 
 builder.Services.AddCors(opts =>

@@ -11,7 +11,8 @@ export interface TabLineItem {
 
 export interface Tab {
   tabId: string;
-  bookingId: string | null;
+  bookingUniqueId: string | null;
+  bookingReference: string | null;
   guestName: string | null;
   guestEmail: string | null;
   guestPhone: string | null;

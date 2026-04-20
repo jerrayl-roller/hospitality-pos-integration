@@ -67,7 +67,7 @@ public class TabsController(TabService tabService, IBookingService bookingServic
     {
         try
         {
-            var tab = await bookingService.ImportBookingAsync(req.BookingId, req.GuestName, req.GuestEmail, req.GuestPhone, ct);
+            var tab = await bookingService.ImportBookingAsync(req.BookingUniqueId, req.GuestName, req.GuestEmail, req.GuestPhone, ct);
             return Ok(tab);
         }
         catch (TabAlreadyOpenException ex)
@@ -81,6 +81,10 @@ public class TabsController(TabService tabService, IBookingService bookingServic
         catch (BookingFullyPrepaidException)
         {
             return Conflict(new { error = "booking_fully_prepaid" });
+        }
+        catch (PaymentLockFailedException ex)
+        {
+            return StatusCode(503, new { error = "payment_lock_failed", detail = ex.Detail });
         }
     }
 }

@@ -38,6 +38,51 @@
 
   <mat-card class="action-card">
     <mat-card-header>
+      <mat-icon mat-card-avatar>lock_open</mat-icon>
+      <mat-card-title>Force Release All Locks</mat-card-title>
+      <mat-card-subtitle>Calls the ROLLER unlock endpoint for every booking-linked tab in the system</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <p>
+        Use this after a POS reset or crash to ensure no bookings remain locked in ROLLER.
+        Safe to run at any time — 404s from ROLLER (lock already gone) are silently ignored.
+      </p>
+      @if (lockReleaseResult(); as result) {
+        <div class="result-banner" [class.result-banner--warn]="result.failed.length > 0">
+          <mat-icon>{{ result.failed.length === 0 ? 'check_circle' : 'warning' }}</mat-icon>
+          <span>
+            {{ result.released.length }} released
+            @if (result.failed.length > 0) { · {{ result.failed.length }} failed }
+          </span>
+        </div>
+        @if (result.failed.length > 0) {
+          <ul class="failure-list">
+            @for (f of result.failed; track f.bookingUniqueId) {
+              <li><strong>{{ f.bookingUniqueId }}</strong> — {{ f.error }}</li>
+            }
+          </ul>
+        }
+      }
+    </mat-card-content>
+    <mat-card-actions>
+      <button
+        mat-raised-button
+        color="warn"
+        [disabled]="releasingLocks()"
+        (click)="confirmReleaseLocks()">
+        @if (releasingLocks()) {
+          <mat-spinner diameter="18"></mat-spinner>
+          Releasing…
+        } @else {
+          <mat-icon>lock_open</mat-icon>
+          Release All Locks
+        }
+      </button>
+    </mat-card-actions>
+  </mat-card>
+
+  <mat-card class="action-card">
+    <mat-card-header>
       <mat-icon mat-card-avatar>delete_sweep</mat-icon>
       <mat-card-title>Delete All Tabs &amp; Payments</mat-card-title>
       <mat-card-subtitle>Permanently removes all tab and payment records from the database</mat-card-subtitle>

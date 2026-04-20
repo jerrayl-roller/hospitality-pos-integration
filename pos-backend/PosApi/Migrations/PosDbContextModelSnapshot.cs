@@ -85,7 +85,7 @@ namespace PosApi.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("BookingId")
+                    b.Property<string>("BookingUniqueId")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("BookingReference")
@@ -125,14 +125,8 @@ namespace PosApi.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("RollerLockId")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime?>("SettledAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<bool>("StuckLock")
-                        .HasColumnType("bit");
 
                     b.HasKey("TabId");
 

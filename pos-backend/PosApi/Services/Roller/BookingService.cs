@@ -10,7 +10,7 @@ public interface IBookingService
 {
     Task<IEnumerable<BookingSummaryDto>> SearchBookingsAsync(string q, CancellationToken ct = default);
     Task<GuestDetailsDto> GetGuestDetailsAsync(int customerId, CancellationToken ct = default);
-    Task<TabDto> ImportBookingAsync(string bookingId, string? guestName, string? guestEmail, string? guestPhone, CancellationToken ct = default);
+    Task<TabDto> ImportBookingAsync(string bookingUniqueId, string? guestName, string? guestEmail, string? guestPhone, CancellationToken ct = default);
 }
 
 public class TabAlreadyOpenException(Guid existingTabId) : Exception("tab_already_open")
@@ -22,7 +22,11 @@ public class BookingAlreadyImportedException() : Exception("booking_already_impo
 
 public class BookingFullyPrepaidException() : Exception("booking_fully_prepaid");
 
-public class BookingService(IRollerApiClient rollerApi, IProductService productService, PosDbContext db) : IBookingService
+public class BookingService(
+    IRollerApiClient rollerApi,
+    IProductService productService,
+    PosDbContext db,
+    IPaymentLockService paymentLockService) : IBookingService
 {
     private static readonly JsonSerializerOptions JsonOpts = new() { PropertyNameCaseInsensitive = true };
 
@@ -36,21 +40,21 @@ public class BookingService(IRollerApiClient rollerApi, IProductService productS
 
         var lookup = await productService.GetProductLookupAsync(ct);
 
-        var bookingIds = bookingsArr.EnumerateArray()
+        var uniqueIds = bookingsArr.EnumerateArray()
             .Select(b => GetString(b, "uniqueId"))
             .Where(id => !string.IsNullOrEmpty(id))
             .ToList();
 
         var importedIds = await db.Tabs.AsNoTracking()
-            .Where(t => t.BookingId != null && bookingIds.Contains(t.BookingId))
-            .Select(t => t.BookingId!)
+            .Where(t => t.BookingUniqueId != null && uniqueIds.Contains(t.BookingUniqueId))
+            .Select(t => t.BookingUniqueId!)
             .ToHashSetAsync(ct);
 
         var results = new List<BookingSummaryDto>();
         foreach (var b in bookingsArr.EnumerateArray())
         {
-            var bookingId = GetString(b, "uniqueId");
-            if (string.IsNullOrEmpty(bookingId)) continue;
+            var bookingUniqueId = GetString(b, "uniqueId");
+            if (string.IsNullOrEmpty(bookingUniqueId)) continue;
 
             var rawItems = GetItemsArray(b);
             string? bookingDate = null;
@@ -75,7 +79,7 @@ public class BookingService(IRollerApiClient rollerApi, IProductService productS
                 customerId = cid.GetInt32();
 
             results.Add(new BookingSummaryDto(
-                BookingId: bookingId,
+                BookingUniqueId: bookingUniqueId,
                 BookingReference: GetString(b, "bookingReference"),
                 GuestName: GetString(b, "name"),
                 BookingDate: bookingDate,
@@ -84,7 +88,7 @@ public class BookingService(IRollerApiClient rollerApi, IProductService productS
                 LineItemCount: rawItems.Count,
                 Items: itemPreviews,
                 CustomerId: customerId,
-                IsImported: importedIds.Contains(bookingId)
+                IsImported: importedIds.Contains(bookingUniqueId)
             ));
         }
 
@@ -102,27 +106,28 @@ public class BookingService(IRollerApiClient rollerApi, IProductService productS
         );
     }
 
-    public async Task<TabDto> ImportBookingAsync(string bookingId, string? guestName, string? guestEmail, string? guestPhone, CancellationToken ct = default)
+    public async Task<TabDto> ImportBookingAsync(string bookingUniqueId, string? guestName, string? guestEmail, string? guestPhone, CancellationToken ct = default)
     {
+        // T2.4: prevent duplicate tabs for the same booking
         var existing = await db.Tabs.AsNoTracking()
-            .FirstOrDefaultAsync(t => t.BookingId == bookingId, ct);
+            .FirstOrDefaultAsync(t => t.BookingUniqueId == bookingUniqueId, ct);
         if (existing is not null)
         {
-            if (existing.PaymentStatus == "open")
+            if (existing.PaymentStatus is "open" or "pending_lock")
                 throw new TabAlreadyOpenException(existing.TabId);
             throw new BookingAlreadyImportedException();
         }
 
-        var detail = await rollerApi.GetAsync<JsonElement>(
-            $"/bookings/{Uri.EscapeDataString(bookingId)}", ct);
+        var bookingDetail = await rollerApi.GetAsync<JsonElement>(
+            $"/bookings/{Uri.EscapeDataString(bookingUniqueId)}", ct);
 
-        var remainder = GetDecimal(detail, "remainder");
+        var remainder = GetDecimal(bookingDetail, "remainder");
         if (remainder < 0.01m)
             throw new BookingFullyPrepaidException();
 
         var productLookup = await productService.GetProductLookupAsync(ct);
 
-        var rawItems = GetItemsArray(detail);
+        var rawItems = GetItemsArray(bookingDetail);
         var importedItems = rawItems
             .Select(item =>
             {
@@ -147,12 +152,13 @@ public class BookingService(IRollerApiClient rollerApi, IProductService productS
         var importedTotal = importedItems.Sum(i => i.UnitPrice * i.Quantity);
         var (preAuthCard, preAuthCardType) = GeneratePreAuthCard();
 
+        // T3.1: create tab in pending_lock state first so it can be cleaned up if the lock fails
         var tab = new Tab
         {
             TabId = Guid.NewGuid(),
-            BookingId = bookingId,
-            BookingReference = GetString(detail, "bookingReference"),
-            GuestName = guestName?.Trim() is { Length: > 0 } n ? n : GetString(detail, "name"),
+            BookingUniqueId = bookingUniqueId,
+            BookingReference = GetString(bookingDetail, "bookingReference"),
+            GuestName = guestName?.Trim() is { Length: > 0 } n ? n : GetString(bookingDetail, "name"),
             GuestEmail = guestEmail?.Trim(),
             GuestPhone = guestPhone?.Trim(),
             ImportedItemsJson = JsonSerializer.Serialize(importedItems),
@@ -160,11 +166,11 @@ public class BookingService(IRollerApiClient rollerApi, IProductService productS
             PreAuthCardNumber = preAuthCard,
             PreAuthStatus = "simulated",
             GrandTotal = importedTotal,
-            PaymentStatus = "open",
+            PaymentStatus = "pending_lock",
             OpenedAt = DateTime.UtcNow
         };
 
-        var payment = new Payment
+        var preAuthPayment = new Payment
         {
             PaymentId = Guid.NewGuid(),
             TabId = tab.TabId,
@@ -178,7 +184,7 @@ public class BookingService(IRollerApiClient rollerApi, IProductService productS
             CreatedAt = DateTime.UtcNow
         };
 
-        var existingPayments = GetJsonArray(detail, "payments")
+        var existingPayments = GetJsonArray(bookingDetail, "payments")
             .Select(p => new Payment
             {
                 PaymentId = Guid.NewGuid(),
@@ -197,8 +203,24 @@ public class BookingService(IRollerApiClient rollerApi, IProductService productS
 
         db.Tabs.Add(tab);
         db.Payments.AddRange(existingPayments);
-        db.Payments.Add(payment);
+        db.Payments.Add(preAuthPayment);
         await db.SaveChangesAsync(ct);
+
+        // T3.1: acquire payment lock; roll back the pending tab if the lock cannot be obtained
+        try
+        {
+            await paymentLockService.AcquireLockAsync(bookingUniqueId, ct);
+            tab.PaymentStatus = "open";
+            await db.SaveChangesAsync(ct);
+        }
+        catch (PaymentLockFailedException)
+        {
+            db.Payments.RemoveRange(
+                await db.Payments.Where(p => p.TabId == tab.TabId).ToListAsync(ct));
+            db.Tabs.Remove(tab);
+            await db.SaveChangesAsync(ct);
+            throw;
+        }
 
         await db.Entry(tab).Collection(t => t.Payments).LoadAsync(ct);
         return TabDto.FromTab(tab);
