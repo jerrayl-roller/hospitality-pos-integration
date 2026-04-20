@@ -6,6 +6,8 @@
 }
 
 .action-card {
+  margin-bottom: 24px;
+
   mat-card-avatar { background: #fce4ec; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
   mat-card-avatar mat-icon { color: #c62828; }
 

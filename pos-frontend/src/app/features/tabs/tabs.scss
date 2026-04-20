@@ -47,19 +47,25 @@
   &.status-walkout_pending { background: #fff3e0; color: #e65100; }
 }
 
-.active-badge {
-  display: inline-block;
-  margin-left: 6px;
-  padding: 1px 7px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 600;
-  background: #1976d2;
-  color: white;
-  vertical-align: middle;
-}
 
 .total-cell { font-weight: 600; }
+.amount-due-cell { font-weight: 600; color: #1565c0; }
+.guest-cell { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.card-badge {
+  display: inline-block; padding: 2px 7px; border-radius: 4px;
+  font-size: 11px; font-weight: 800; letter-spacing: 0.5px; color: #fff;
+  vertical-align: middle;
+}
+.card-badge--visa { background: #1a1f71; font-style: italic; }
+.card-badge--mastercard { background: #eb001b; }
+.card-badge--amex { background: #007b5e; }
+
+.card-last4 {
+  margin-left: 6px; font-size: 12px; font-weight: 600;
+  color: #555; font-family: monospace; vertical-align: middle;
+}
+.card-none { color: #bbb; }
 
 .active-row { background: #f3f8ff; }
 

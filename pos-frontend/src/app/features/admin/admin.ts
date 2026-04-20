@@ -23,40 +23,63 @@ export class AdminComponent {
   private readonly notifications = inject(NotificationService);
   private readonly dialog = inject(MatDialog);
 
-  resetting = signal(false);
-  lastResult = signal<string | null>(null);
+  resyncing = signal(false);
+  clearing = signal(false);
+  resyncResult = signal<string | null>(null);
+  clearResult = signal<string | null>(null);
 
-  confirmReset(): void {
-    const ref = this.dialog.open(ConfirmDialogComponent, {
+  confirmResync(): void {
+    this.dialog.open(ConfirmDialogComponent, {
       data: {
-        title: 'Clear Database & Resync',
-        message: 'This will permanently delete all tabs and payments, and clear the product cache. The next catalogue load will pull fresh data from ROLLER. Continue?',
-        confirmLabel: 'Clear & Resync',
-        confirmColor: 'warn'
+        title: 'Force Product Resync',
+        message: 'This will clear the product cache. The next catalogue load will pull fresh data from ROLLER. Continue?',
+        confirmLabel: 'Resync Products',
+        confirmColor: 'primary'
       },
       width: '420px'
-    });
-
-    ref.afterClosed().subscribe(confirmed => {
-      if (confirmed) this.runReset();
+    }).afterClosed().subscribe(confirmed => {
+      if (confirmed) this.runResync();
     });
   }
 
-  private runReset(): void {
-    this.resetting.set(true);
-    this.lastResult.set(null);
-    this.tabState.clearTab();
-
-    this.api.post<{ message: string }>('/api/admin/reset', {}).subscribe({
-      next: res => {
-        this.resetting.set(false);
-        this.lastResult.set(res.message);
-        this.notifications.info('Database cleared. Products will resync on next catalogue load.');
+  confirmClear(): void {
+    this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Delete All Tabs & Payments',
+        message: 'This will permanently delete all tabs and payment records. This cannot be undone. Continue?',
+        confirmLabel: 'Delete All',
+        confirmColor: 'warn'
       },
-      error: () => {
-        this.resetting.set(false);
-        this.lastResult.set(null);
-      }
+      width: '420px'
+    }).afterClosed().subscribe(confirmed => {
+      if (confirmed) this.runClear();
+    });
+  }
+
+  private runResync(): void {
+    this.resyncing.set(true);
+    this.resyncResult.set(null);
+    this.api.post<{ message: string }>('/api/admin/resync-products', {}).subscribe({
+      next: res => {
+        this.resyncing.set(false);
+        this.resyncResult.set(res.message);
+        this.notifications.info('Product cache cleared. Will resync on next catalogue load.');
+      },
+      error: () => this.resyncing.set(false)
+    });
+  }
+
+  private runClear(): void {
+    this.clearing.set(true);
+    this.clearResult.set(null);
+    this.tabState.clearTab();
+    this.api.post<{ message: string }>('/api/admin/clear-data', {}).subscribe({
+      next: res => {
+        this.clearing.set(false);
+        this.clearResult.set(res.message);
+        this.notifications.info('All tabs and payments deleted.');
+      },
+      error: () => this.clearing.set(false)
     });
   }
 }

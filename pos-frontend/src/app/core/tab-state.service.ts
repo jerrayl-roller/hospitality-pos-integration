@@ -15,11 +15,14 @@ export interface Tab {
   guestName: string | null;
   guestEmail: string | null;
   guestPhone: string | null;
+  importedItems: TabLineItem[];
   addedItems: TabLineItem[];
   grandTotal: number;
+  amountRemaining: number;
   paymentStatus: string;
   preAuthStatus: string;
   preAuthCardNumber: string | null;
+  preAuthCardType: string | null;
   hasPendingConflict: boolean;
   openedAt: string;
   settledAt: string | null;

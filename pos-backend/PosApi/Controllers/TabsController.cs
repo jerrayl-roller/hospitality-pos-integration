@@ -1,12 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using PosApi.Dtos;
 using PosApi.Services;
+using PosApi.Services.Roller;
 
 namespace PosApi.Controllers;
 
 [ApiController]
 [Route("api/tabs")]
-public class TabsController(TabService tabService) : ControllerBase
+public class TabsController(TabService tabService, IBookingService bookingService) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> ListTabs(CancellationToken ct)
@@ -59,5 +60,27 @@ public class TabsController(TabService tabService) : ControllerBase
         if (!success) return Conflict(new { error });
 
         return NoContent();
+    }
+
+    [HttpPost("from-booking")]
+    public async Task<IActionResult> ImportFromBooking([FromBody] ImportBookingRequest req, CancellationToken ct)
+    {
+        try
+        {
+            var tab = await bookingService.ImportBookingAsync(req.BookingId, req.GuestName, req.GuestEmail, req.GuestPhone, ct);
+            return Ok(tab);
+        }
+        catch (TabAlreadyOpenException ex)
+        {
+            return Conflict(new { error = "tab_already_open", existingTabId = ex.ExistingTabId });
+        }
+        catch (BookingAlreadyImportedException)
+        {
+            return Conflict(new { error = "booking_already_imported" });
+        }
+        catch (BookingFullyPrepaidException)
+        {
+            return Conflict(new { error = "booking_fully_prepaid" });
+        }
     }
 }

@@ -9,14 +9,18 @@ namespace PosApi.Controllers;
 [Route("api/admin")]
 public class AdminController(PosDbContext db, IProductService productService) : ControllerBase
 {
-    [HttpPost("reset")]
-    public async Task<IActionResult> Reset(CancellationToken ct)
+    [HttpPost("resync-products")]
+    public IActionResult ResyncProducts()
+    {
+        productService.InvalidateCache();
+        return Ok(new { message = "Product cache cleared — next catalogue load will pull fresh data from ROLLER." });
+    }
+
+    [HttpPost("clear-data")]
+    public async Task<IActionResult> ClearData(CancellationToken ct)
     {
         await db.Payments.ExecuteDeleteAsync(ct);
         await db.Tabs.ExecuteDeleteAsync(ct);
-
-        productService.InvalidateCache();
-
-        return Ok(new { cleared = true, message = "All tabs and payments deleted. Product cache cleared — next catalogue load will resync from ROLLER." });
+        return Ok(new { message = "All tabs and payments permanently deleted." });
     }
 }

@@ -10,6 +10,10 @@
         <mat-icon matListItemIcon>menu_book</mat-icon>
         <span matListItemTitle>Catalogue</span>
       </a>
+      <a mat-list-item routerLink="/booking-search" routerLinkActive="active-link">
+        <mat-icon matListItemIcon>search</mat-icon>
+        <span matListItemTitle>Bookings</span>
+      </a>
       <a mat-list-item routerLink="/tabs" routerLinkActive="active-link">
         <mat-icon matListItemIcon>receipt_long</mat-icon>
         <span matListItemTitle>Tabs</span>
@@ -23,16 +27,13 @@
 
   <!-- Main content -->
   <mat-sidenav-content class="main-content">
-    <mat-toolbar color="primary" class="top-bar">
-      <span class="toolbar-title">F&amp;B Point of Sale</span>
-    </mat-toolbar>
     <div class="page-content">
       <router-outlet></router-outlet>
     </div>
   </mat-sidenav-content>
 
-  <!-- Right tab panel — always visible -->
-  <mat-sidenav position="end" mode="side" opened class="tab-panel">
+  <!-- Right tab panel — hidden on booking-search and admin pages -->
+  <mat-sidenav position="end" mode="side" [opened]="showTabPanel" class="tab-panel">
     <app-tab-panel></app-tab-panel>
   </mat-sidenav>
 </mat-sidenav-container>

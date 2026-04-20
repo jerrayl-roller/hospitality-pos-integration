@@ -11,8 +11,12 @@ import { TabStateService, Tab } from '../../core/tab-state.service';
 export interface TabSummary {
   tabId: string;
   bookingId: string | null;
+  guestName: string | null;
   itemCount: number;
   grandTotal: number;
+  amountRemaining: number;
+  preAuthCardType: string | null;
+  preAuthCardLast4: string | null;
   paymentStatus: string;
   openedAt: string;
 }
@@ -33,7 +37,7 @@ export class TabsComponent implements OnInit {
   tabs = signal<TabSummary[]>([]);
   loadingTabId = signal<string | null>(null);
 
-  readonly columns = ['status', 'opened', 'items', 'total', 'actions'];
+  readonly columns = ['status', 'guest', 'card', 'opened', 'items', 'total', 'amountDue', 'actions'];
 
   ngOnInit(): void {
     this.load();
@@ -58,5 +62,14 @@ export class TabsComponent implements OnInit {
 
   isActive(tabId: string): boolean {
     return this.tabState.currentTab?.tabId === tabId;
+  }
+
+  cardLabel(cardType: string | null): string {
+    switch (cardType) {
+      case 'visa': return 'VISA';
+      case 'mastercard': return 'MC';
+      case 'amex': return 'AMEX';
+      default: return 'CARD';
+    }
   }
 }

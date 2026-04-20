@@ -88,6 +88,9 @@ namespace PosApi.Migrations
                     b.Property<string>("BookingId")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("BookingReference")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("GuestEmail")
                         .HasColumnType("nvarchar(max)");
 

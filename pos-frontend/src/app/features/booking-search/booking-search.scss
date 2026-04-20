@@ -1,0 +1,166 @@
+.search-page {
+  padding: 24px;
+  max-width: 800px;
+}
+
+.page-header {
+  margin-bottom: 20px;
+
+  h2 {
+    margin: 0 0 4px;
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  .hint {
+    margin: 0;
+    font-size: 13px;
+    color: #888;
+  }
+}
+
+.search-field {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.loading-state {
+  display: flex;
+  justify-content: center;
+  padding: 40px;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 48px 16px;
+  color: #bbb;
+
+  mat-icon { font-size: 40px; height: 40px; width: 40px; }
+  p { margin: 0; font-size: 14px; color: #999; text-align: center; }
+}
+
+.results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.booking-card {
+  border: 1px solid #e0e0e0;
+}
+
+.card-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.booking-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.guest-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #212121;
+  margin-bottom: 4px;
+}
+
+.booking-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+
+  .booking-ref { font-family: monospace; }
+  .separator { color: #ccc; }
+}
+
+.items-panel {
+  margin: 4px 0 8px;
+  box-shadow: none !important;
+  border: 1px solid #ebebeb;
+  border-radius: 4px !important;
+
+  ::ng-deep .mat-expansion-panel-header {
+    padding: 0 12px;
+    height: 36px;
+    font-size: 12px;
+    color: #666;
+  }
+
+  ::ng-deep .mat-expansion-panel-body {
+    padding: 0 12px 10px;
+  }
+}
+
+.item-preview {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  li {
+    font-size: 12px;
+    color: #555;
+  }
+
+  .item-qty {
+    color: #999;
+    margin-left: 4px;
+  }
+}
+
+.booking-bottom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.total {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1976d2;
+}
+
+.status-chip {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  &.status-paid { background: #e8f5e9; color: #2e7d32; }
+  &.status-partial { background: #fff8e1; color: #f57f17; }
+  &.status-cancelled { background: #ffebee; color: #c62828; }
+  &.status-other { background: #f5f5f5; color: #757575; }
+}
+
+.card-action {
+  flex-shrink: 0;
+
+  mat-spinner { display: inline-block; }
+}
+
+.imported-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2e7d32;
+
+  mat-icon { font-size: 18px; height: 18px; width: 18px; }
+}

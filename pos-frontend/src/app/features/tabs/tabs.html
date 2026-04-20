@@ -34,8 +34,24 @@
             <span class="status-badge" [class]="'status-' + tab.paymentStatus">
               {{ tab.paymentStatus }}
             </span>
-            @if (isActive(tab.tabId)) {
-              <span class="active-badge">active</span>
+          </td>
+        </ng-container>
+
+        <!-- Guest -->
+        <ng-container matColumnDef="guest">
+          <th mat-header-cell *matHeaderCellDef>Guest</th>
+          <td mat-cell *matCellDef="let tab" class="guest-cell">{{ tab.guestName || '—' }}</td>
+        </ng-container>
+
+        <!-- Card -->
+        <ng-container matColumnDef="card">
+          <th mat-header-cell *matHeaderCellDef>Card</th>
+          <td mat-cell *matCellDef="let tab">
+            @if (tab.preAuthCardType) {
+              <span class="card-badge" [class]="'card-badge--' + tab.preAuthCardType">{{ cardLabel(tab.preAuthCardType) }}</span>
+              <span class="card-last4">••{{ tab.preAuthCardLast4 }}</span>
+            } @else {
+              <span class="card-none">—</span>
             }
           </td>
         </ng-container>
@@ -57,6 +73,14 @@
           <th mat-header-cell *matHeaderCellDef>Total</th>
           <td mat-cell *matCellDef="let tab" class="total-cell">
             {{ tab.grandTotal | currency:'AUD':'symbol':'1.2-2' }}
+          </td>
+        </ng-container>
+
+        <!-- Amount Due -->
+        <ng-container matColumnDef="amountDue">
+          <th mat-header-cell *matHeaderCellDef>Amount Owing</th>
+          <td mat-cell *matCellDef="let tab" class="amount-due-cell">
+            {{ tab.amountRemaining | currency:'AUD':'symbol':'1.2-2' }}
           </td>
         </ng-container>
 

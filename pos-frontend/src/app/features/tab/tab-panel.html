@@ -19,11 +19,33 @@
     <mat-divider></mat-divider>
 
     <div class="items-scroll">
-      @if (tab.addedItems.length === 0) {
+      @if (tab.importedItems && tab.importedItems.length > 0) {
+        <mat-expansion-panel class="booking-items-panel">
+          <mat-expansion-panel-header>
+            <mat-panel-title>Booking Items</mat-panel-title>
+            <mat-panel-description>{{ tab.importedItems.length }} item{{ tab.importedItems.length === 1 ? '' : 's' }}</mat-panel-description>
+          </mat-expansion-panel-header>
+          @for (item of tab.importedItems; track item.productId) {
+            <div class="line-item line-item--imported">
+              <div class="item-name">{{ item.productName }}</div>
+              <div class="item-row">
+                <span class="qty-readonly">x{{ item.quantity }}</span>
+                <span class="line-total">{{ (item.unitPrice * item.quantity) | currency:'AUD':'symbol':'1.2-2' }}</span>
+              </div>
+              <div class="unit-price">@ {{ item.unitPrice | currency:'AUD':'symbol':'1.2-2' }} each</div>
+            </div>
+          }
+        </mat-expansion-panel>
+        <div class="section-header">Tab Items</div>
+      }
+
+      @if (tab.addedItems.length === 0 && (!tab.importedItems || tab.importedItems.length === 0)) {
         <div class="empty-hint">
           <mat-icon>add_shopping_cart</mat-icon>
           <p>Tap a product to add it</p>
         </div>
+      } @else if (tab.addedItems.length === 0 && tab.importedItems && tab.importedItems.length > 0) {
+        <div class="empty-hint-inline">No items added yet</div>
       } @else {
         @for (item of tab.addedItems; track item.productId) {
           <div class="line-item">
@@ -52,6 +74,11 @@
         <span>Total</span>
         <span class="total-amount">{{ tab.grandTotal | currency:'AUD':'symbol':'1.2-2' }}</span>
       </div>
+      <div class="amount-owing">
+        <span>Amount Owing</span>
+        <span class="owing-amount">{{ tab.amountRemaining | currency:'AUD':'symbol':'1.2-2' }}</span>
+      </div>
+      <mat-divider></mat-divider>
       @if (tabState.hasChanges) {
         <div class="footer-actions">
           <button mat-raised-button color="primary" class="park-btn" (click)="parkTab()">

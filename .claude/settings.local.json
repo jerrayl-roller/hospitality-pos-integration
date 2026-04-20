@@ -18,7 +18,12 @@
       "Bash(dotnet remove *)",
       "Bash(curl -s http://localhost:5000/api/products/fnb)",
       "Bash(python3 -m json.tool)",
-      "Bash(sqlcmd *)"
+      "Bash(sqlcmd *)",
+      "Bash(npx ng *)",
+      "Bash(curl -s \"http://localhost:5000/api/bookings/search?q=test\")",
+      "Bash(xargs ls *)",
+      "Bash(npx tsc *)",
+      "Bash(node_modules/.bin/tsc --noEmit)"
     ]
   }
 }

@@ -51,15 +51,6 @@
   height: 100%;
 }
 
-.top-bar {
-  flex-shrink: 0;
-
-  .toolbar-title {
-    font-size: 17px;
-    font-weight: 500;
-  }
-}
-
 .page-content {
   flex: 1;
   overflow-y: auto;

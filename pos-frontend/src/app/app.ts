@@ -1,10 +1,11 @@
-import { Component } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { Component, inject } from '@angular/core';
+import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { MatSidenavModule } from '@angular/material/sidenav';
-import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { TabPanelComponent } from './features/tab/tab-panel';
+
+const PANEL_HIDDEN_ROUTES = ['/booking-search', '/admin'];
 
 @Component({
   selector: 'app-root',
@@ -14,7 +15,6 @@ import { TabPanelComponent } from './features/tab/tab-panel';
     RouterLink,
     RouterLinkActive,
     MatSidenavModule,
-    MatToolbarModule,
     MatListModule,
     MatIconModule,
     TabPanelComponent
@@ -22,4 +22,10 @@ import { TabPanelComponent } from './features/tab/tab-panel';
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
-export class App {}
+export class App {
+  private readonly router = inject(Router);
+
+  get showTabPanel(): boolean {
+    return !PANEL_HIDDEN_ROUTES.includes(this.router.url);
+  }
+}

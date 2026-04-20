@@ -33,6 +33,7 @@ builder.Services.AddHttpClient("Roller", client =>
 builder.Services.AddSingleton<RollerTokenService>();
 builder.Services.AddScoped<IRollerApiClient, RollerApiClient>();
 builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<TabService>();
 
 builder.Services.AddCors(opts =>

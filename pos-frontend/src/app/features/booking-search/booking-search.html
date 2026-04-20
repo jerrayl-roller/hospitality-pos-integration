@@ -1,0 +1,96 @@
+<div class="search-page">
+  <div class="page-header">
+    <h2>Booking Search</h2>
+    <p class="hint">Search by guest name, email, phone, or booking ID. Up to 10 results returned.</p>
+  </div>
+
+  <mat-form-field appearance="outline" class="search-field">
+    <mat-label>Search bookings</mat-label>
+    <mat-icon matPrefix>search</mat-icon>
+    <input matInput [formControl]="searchControl" placeholder="Name, email, phone, or booking ID" autocomplete="off" />
+    @if (searchControl.value) {
+      <button matSuffix mat-icon-button (click)="clearSearch()" aria-label="Clear">
+        <mat-icon>close</mat-icon>
+      </button>
+    }
+    @if (queryTooShort) {
+      <mat-hint>Enter at least 3 characters</mat-hint>
+    }
+  </mat-form-field>
+
+  @if (loading) {
+    <div class="loading-state">
+      <mat-spinner diameter="36"></mat-spinner>
+    </div>
+  }
+
+  @if (!loading && searched && results.length === 0) {
+    <div class="empty-state">
+      <mat-icon>search_off</mat-icon>
+      <p>No bookings found. Try a different name, email, or booking ID.</p>
+    </div>
+  }
+
+  @if (!loading && results.length > 0) {
+    <div class="results-list">
+      @for (booking of results; track booking.bookingId) {
+        <mat-card class="booking-card">
+          <mat-card-content>
+            <div class="card-main">
+              <div class="booking-info">
+                <div class="guest-name">{{ booking.guestName || 'Unnamed Booking' }}</div>
+                <div class="booking-meta">
+                  <span class="booking-ref">{{ booking.bookingReference || booking.bookingId }}</span>
+                  @if (booking.bookingDate) {
+                    <span class="separator">·</span>
+                    <span class="booking-date">{{ booking.bookingDate | date:'d MMM yyyy' }}</span>
+                  }
+                  <span class="separator">·</span>
+                  <span class="item-count">{{ booking.lineItemCount }} item{{ booking.lineItemCount !== 1 ? 's' : '' }}</span>
+                </div>
+                @if (booking.items && booking.items.length > 0) {
+                  <mat-expansion-panel class="items-panel">
+                    <mat-expansion-panel-header>
+                      <mat-panel-title>{{ booking.items.length }} item{{ booking.items.length !== 1 ? 's' : '' }}</mat-panel-title>
+                    </mat-expansion-panel-header>
+                    <ul class="item-preview">
+                      @for (item of booking.items; track item.productName) {
+                        <li>{{ item.productName }} <span class="item-qty">×{{ item.quantity }}</span></li>
+                      }
+                    </ul>
+                  </mat-expansion-panel>
+                }
+                <div class="booking-bottom">
+                  <span class="status-chip" [class]="statusClass(booking.status)">
+                    {{ statusLabel(booking.status) }}
+                  </span>
+                  <span class="total">{{ booking.totalAmount | currency:'AUD':'symbol':'1.2-2' }}</span>
+                </div>
+              </div>
+              <div class="card-action">
+                @if (booking.isImported) {
+                  <span class="imported-badge">
+                    <mat-icon>check_circle</mat-icon>
+                    Imported
+                  </span>
+                } @else {
+                  <button
+                    mat-raised-button
+                    color="primary"
+                    [disabled]="importingId !== null"
+                    (click)="importBooking(booking)">
+                    @if (importingId === booking.bookingId) {
+                      <mat-spinner diameter="16"></mat-spinner>
+                    } @else {
+                      Import
+                    }
+                  </button>
+                }
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
+  }
+</div>

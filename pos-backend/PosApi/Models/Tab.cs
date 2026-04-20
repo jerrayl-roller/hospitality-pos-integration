@@ -4,6 +4,7 @@ public class Tab
 {
     public Guid TabId { get; set; }
     public string? BookingId { get; set; }
+    public string? BookingReference { get; set; }
     public string? GuestName { get; set; }
     public string? GuestEmail { get; set; }
     public string? GuestPhone { get; set; }

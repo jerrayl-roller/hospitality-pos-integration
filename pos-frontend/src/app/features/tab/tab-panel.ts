@@ -4,14 +4,16 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatExpansionModule } from '@angular/material/expansion';
 import { MatDialog } from '@angular/material/dialog';
-import { TabStateService } from '../../core/tab-state.service';
+import { TabStateService, Tab } from '../../core/tab-state.service';
 import { NewTabDialogComponent, NewTabResult } from './new-tab-dialog';
+import { PreAuthDialogComponent } from '../booking-search/pre-auth-dialog';
 
 @Component({
   selector: 'app-tab-panel',
   standalone: true,
-  imports: [CommonModule, CurrencyPipe, AsyncPipe, MatButtonModule, MatIconModule, MatDividerModule, MatProgressSpinnerModule],
+  imports: [CommonModule, CurrencyPipe, AsyncPipe, MatButtonModule, MatIconModule, MatDividerModule, MatProgressSpinnerModule, MatExpansionModule],
   templateUrl: './tab-panel.html',
   styleUrl: './tab-panel.scss'
 })
@@ -27,7 +29,14 @@ export class TabPanelComponent {
       if (!result) return;
       this.openingTab = true;
       this.tabState.openNewTab(result).subscribe({
-        next: () => this.openingTab = false,
+        next: (tab: Tab) => {
+          this.openingTab = false;
+          this.dialog.open(PreAuthDialogComponent, {
+            data: { cardNumber: tab.preAuthCardNumber, cardType: tab.preAuthCardType },
+            width: '440px',
+            disableClose: true
+          });
+        },
         error: () => this.openingTab = false
       });
     });

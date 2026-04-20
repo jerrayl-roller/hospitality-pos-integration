@@ -4,19 +4,53 @@
   <mat-card class="action-card">
     <mat-card-header>
       <mat-icon mat-card-avatar>sync</mat-icon>
-      <mat-card-title>Clear Database &amp; Force Resync</mat-card-title>
-      <mat-card-subtitle>Deletes all tabs and payments, clears the product cache</mat-card-subtitle>
+      <mat-card-title>Force Product Resync</mat-card-title>
+      <mat-card-subtitle>Clears the product cache so the next catalogue load pulls fresh data from ROLLER</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <p>
+        Use this if products have been added, renamed, or repriced in ROLLER and you need the
+        POS catalogue to reflect those changes immediately.
+      </p>
+      @if (resyncResult()) {
+        <div class="result-banner">
+          <mat-icon>check_circle</mat-icon>
+          {{ resyncResult() }}
+        </div>
+      }
+    </mat-card-content>
+    <mat-card-actions>
+      <button
+        mat-raised-button
+        color="primary"
+        [disabled]="resyncing()"
+        (click)="confirmResync()">
+        @if (resyncing()) {
+          <mat-spinner diameter="18"></mat-spinner>
+          Resyncing…
+        } @else {
+          <mat-icon>sync</mat-icon>
+          Resync Products
+        }
+      </button>
+    </mat-card-actions>
+  </mat-card>
+
+  <mat-card class="action-card">
+    <mat-card-header>
+      <mat-icon mat-card-avatar>delete_sweep</mat-icon>
+      <mat-card-title>Delete All Tabs &amp; Payments</mat-card-title>
+      <mat-card-subtitle>Permanently removes all tab and payment records from the database</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
       <p>
         Use this to reset the POS to a clean state. All open tabs and payment records will be
-        permanently deleted. The product catalogue cache will be invalidated — the next time
-        someone navigates to Catalogue, it will pull fresh data from ROLLER.
+        permanently deleted. This cannot be undone.
       </p>
-      @if (lastResult()) {
+      @if (clearResult()) {
         <div class="result-banner">
           <mat-icon>check_circle</mat-icon>
-          {{ lastResult() }}
+          {{ clearResult() }}
         </div>
       }
     </mat-card-content>
@@ -24,14 +58,14 @@
       <button
         mat-raised-button
         color="warn"
-        [disabled]="resetting()"
-        (click)="confirmReset()">
-        @if (resetting()) {
+        [disabled]="clearing()"
+        (click)="confirmClear()">
+        @if (clearing()) {
           <mat-spinner diameter="18"></mat-spinner>
-          Clearing…
+          Deleting…
         } @else {
-          <mat-icon>delete_sweep</mat-icon>
-          Clear &amp; Resync
+          <mat-icon>delete_forever</mat-icon>
+          Delete All
         }
       </button>
     </mat-card-actions>

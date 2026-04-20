@@ -281,23 +281,156 @@
 
 Returns the booking's `uniqueId` — not a payment record ID.
 
+
+## 6. Get Guest detail
+get https://api.roller.app/guests/{guestId}
+
+guestId
+string
+required
+ID of a guest record (Formerly customerId, which is equivalent)
+Example:
+32444
+
 ### Key fields confirmed
+Record of guest details
 
-| Field | Confirmed value / notes |
-|-------|------------------------|
-| Line-level F&B detail support | **No.** Single total only — no line items. The new `push-charges` endpoint (see `push-charges.md`) is required for line-level reconciliation. |
-| Payment type enum values | Currently: `CreditCard` \| `CreditCardPreAuth` \| `Cash` \| `Cheque` \| `BankTransfer` \| `Other`. `Giftcard` is being added — see `payments.md` for the change contract. |
-| Amount format | Decimal float (e.g. `25.5`), **not cents**. |
-| Currency field | **Not present** — assumes venue local currency. |
-| Amend existing records | Not supported — add only. Refunds via negative `amount`. |
-| Idempotency | Caller-provided `id` field. Recommended format for POS: `{tabId}-settlement` for card, `{tabId}-giftcard-payment` for gift card. |
+firstName
+string
+required
+First name of the customer
 
-### Notes / surprises
+<= 32 characters
+Example:
+John
+lastName
+string
+required
+Last name of the customer
 
-- **No line-level detail.** Confirms that `push-charges.md` is the right design for F&B reconciliation. This endpoint should still be called to post the settlement payment record (e.g. `paymentType: "CreditCard"`, `amount: tabTotal`), and the new push-charges endpoint carries the itemised F&B detail alongside it.
-- **`Giftcard` cannot be posted today.** The required enum change and its contract are documented in `payments.md`. See `gift-card.md` for the full settlement sequence.
-- **Amount is decimal, not cents.** Contracts in `push-charges.md` and `gift-card.md` use decimal floats to match this convention.
-- **No response payment ID.** The response only returns the booking `uniqueId`, not the created payment record ID. The POS must store the caller-provided `id` field as its own reference to the payment record.
+<= 32 characters
+Example:
+Smith
+email
+string or null
+required
+Email address of the customer (Required only if phone is not provided).
+
+Provided value must be a valid email pattern.
+<= 256 characters
+Example:
+johnsmith@noemail.com
+phone
+string or null
+required
+Phone number of the customer (Required only if email is not provided).
+
+<= 20 characters
+Example:
+12345678
+dateOfBirth
+string or null
+Date of Birth of the guest in YYYY-MM-DD format.
+
+Date of Birth must not be before 1900 or in the future.
+Example:
+2001-03-26
+gender
+any
+Gender of the guest
+
+Allowed values:
+Male
+Female
+Other
+PreferNotToSay
+acceptMarketing
+boolean
+When true the guest has accepted to receive email marketing content
+
+Example:
+false
+acceptMarketingSms
+boolean
+When true the guest has accepted to receive SMS marketing content
+
+Example:
+false
+taxIdentificationNumber
+string
+Tax identification number that may be used for maintaining fiscal compliance
+
+<= 64 characters
+address
+object or null
+street
+string
+Street number and name of the customer
+
+<= 256 characters
+Example:
+123 Fake Street
+suburb
+string
+Suburb of the customer
+
+<= 64 characters
+Example:
+Orange County
+city
+string
+City of the customer
+
+<= 64 characters
+Example:
+Los Angeles
+state
+string
+State / province of the customer
+
+<= 64 characters
+Example:
+CA
+postcode
+string
+Post code / ZIP code of the customer
+
+<= 12 characters
+Example:
+27385
+country
+string
+Country of the customer
+
+<= 64 characters
+Example:
+United States
+flags
+array[CustomerFlag]
+Flag information that may be associated with the guest record.Show all...
+
+type
+any
+Type of flag associated with the guest
+
+Allowed values:
+Ban
+VIP
+Medical
+Alert
+Competency
+comment
+string
+Further information regarding the flag
+
+Example:
+Guest has repeatedly ignored the rules
+expiryDate
+string<date> or null
+The date the flag expires and is no longer relevant for the guest
+
+Example:
+2025-07-14
 
 ---
 

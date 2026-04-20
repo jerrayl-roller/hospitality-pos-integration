@@ -12,17 +12,43 @@ public class TabService(PosDbContext db)
 
     public async Task<TabDto> CreateTabAsync(CreateTabRequest req, CancellationToken ct = default)
     {
+        var (preAuthCard, preAuthCardType) = GeneratePreAuthCard();
         var tab = new Tab
         {
             TabId = Guid.NewGuid(),
             GuestName = req.GuestName?.Trim(),
             GuestEmail = req.GuestEmail?.Trim(),
             GuestPhone = req.GuestPhone?.Trim(),
+            PreAuthCardNumber = preAuthCard,
+            PreAuthStatus = "simulated",
             OpenedAt = DateTime.UtcNow
         };
+        var payment = new Payment
+        {
+            PaymentId = Guid.NewGuid(),
+            TabId = tab.TabId,
+            Type = "pre_auth",
+            Method = preAuthCardType,
+            CardNumber = preAuthCard,
+            Amount = 0,
+            Currency = "AUD",
+            Status = "success",
+            RollerPushStatus = "not_pushed",
+            CreatedAt = DateTime.UtcNow
+        };
         db.Tabs.Add(tab);
+        db.Payments.Add(payment);
         await db.SaveChangesAsync(ct);
+        await db.Entry(tab).Collection(t => t.Payments).LoadAsync(ct);
         return TabDto.FromTab(tab);
+    }
+
+    private static (string cardNumber, string cardType) GeneratePreAuthCard()
+    {
+        var types = new[] { "visa", "mastercard", "amex" };
+        var cardType = types[Random.Shared.Next(types.Length)];
+        var cardNumber = string.Join("-", Enumerable.Range(0, 4).Select(_ => Random.Shared.Next(1000, 9999).ToString()));
+        return (cardNumber, cardType);
     }
 
     public async Task<TabDto?> GetTabAsync(Guid tabId, CancellationToken ct = default)
@@ -35,7 +61,7 @@ public class TabService(PosDbContext db)
 
     public async Task<TabDto?> AddItemAsync(Guid tabId, AddItemRequest req, CancellationToken ct = default)
     {
-        var tab = await db.Tabs.FirstOrDefaultAsync(t => t.TabId == tabId, ct);
+        var tab = await db.Tabs.Include(t => t.Payments).FirstOrDefaultAsync(t => t.TabId == tabId, ct);
         if (tab is null) return null;
 
         var items = DeserializeItems(tab.AddedItemsJson);
@@ -52,14 +78,14 @@ public class TabService(PosDbContext db)
         }
 
         tab.AddedItemsJson = JsonSerializer.Serialize(items);
-        tab.GrandTotal = ComputeTotal(items);
+        tab.GrandTotal = ComputeGrandTotal(tab.ImportedItemsJson, items);
         await db.SaveChangesAsync(ct);
         return TabDto.FromTab(tab);
     }
 
     public async Task<TabDto?> RemoveItemAsync(Guid tabId, string productId, CancellationToken ct = default)
     {
-        var tab = await db.Tabs.FirstOrDefaultAsync(t => t.TabId == tabId, ct);
+        var tab = await db.Tabs.Include(t => t.Payments).FirstOrDefaultAsync(t => t.TabId == tabId, ct);
         if (tab is null) return null;
 
         var items = DeserializeItems(tab.AddedItemsJson);
@@ -75,18 +101,18 @@ public class TabService(PosDbContext db)
         }
 
         tab.AddedItemsJson = JsonSerializer.Serialize(items);
-        tab.GrandTotal = ComputeTotal(items);
+        tab.GrandTotal = ComputeGrandTotal(tab.ImportedItemsJson, items);
         await db.SaveChangesAsync(ct);
         return TabDto.FromTab(tab);
     }
 
     public async Task<TabDto?> RestoreItemsAsync(Guid tabId, List<TabLineItem> items, CancellationToken ct = default)
     {
-        var tab = await db.Tabs.FirstOrDefaultAsync(t => t.TabId == tabId, ct);
+        var tab = await db.Tabs.Include(t => t.Payments).FirstOrDefaultAsync(t => t.TabId == tabId, ct);
         if (tab is null) return null;
 
         tab.AddedItemsJson = JsonSerializer.Serialize(items);
-        tab.GrandTotal = ComputeTotal(items);
+        tab.GrandTotal = ComputeGrandTotal(tab.ImportedItemsJson, items);
         await db.SaveChangesAsync(ct);
         return TabDto.FromTab(tab);
     }
@@ -94,6 +120,7 @@ public class TabService(PosDbContext db)
     public async Task<IEnumerable<TabSummaryDto>> GetAllTabsAsync(CancellationToken ct = default)
     {
         var tabs = await db.Tabs.AsNoTracking()
+            .Include(t => t.Payments)
             .OrderByDescending(t => t.OpenedAt)
             .ToListAsync(ct);
         return tabs.Select(TabSummaryDto.FromTab);
@@ -122,6 +149,7 @@ public class TabService(PosDbContext db)
     private static List<TabLineItem> DeserializeItems(string json) =>
         JsonSerializer.Deserialize<List<TabLineItem>>(json, JsonOpts) ?? [];
 
-    private static decimal ComputeTotal(List<TabLineItem> items) =>
-        items.Sum(i => i.UnitPrice * i.Quantity);
+    private static decimal ComputeGrandTotal(string importedJson, List<TabLineItem> addedItems) =>
+        DeserializeItems(importedJson).Sum(i => i.UnitPrice * i.Quantity)
+        + addedItems.Sum(i => i.UnitPrice * i.Quantity);
 }

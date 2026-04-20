@@ -121,12 +121,28 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 0 12px;
+  padding: 14px 0 6px;
+  font-size: 13px;
+  color: #555;
+}
+
+.total-amount {
+  font-size: 15px;
+  font-weight: 400;
+  color: #555;
+}
+
+
+.amount-owing {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0 14px;
   font-weight: 600;
   font-size: 15px;
 }
 
-.total-amount {
+.owing-amount {
   font-size: 22px;
   font-weight: 700;
   color: #1976d2;
@@ -140,6 +156,58 @@
 
 .park-btn {
   width: 100%;
+}
+
+.section-header {
+  padding: 6px 16px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #999;
+  background: #f5f5f5;
+  border-bottom: 1px solid #ebebeb;
+}
+
+.line-item--imported {
+  background: #fafafa;
+
+  .item-name { color: #555; }
+}
+
+.booking-items-panel {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  border-bottom: 1px solid #ebebeb;
+
+  ::ng-deep .mat-expansion-panel-header {
+    padding: 0 16px;
+    height: 40px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #999;
+    background: #f5f5f5;
+  }
+
+  ::ng-deep .mat-expansion-panel-body {
+    padding: 0;
+  }
+}
+
+.qty-readonly {
+  font-size: 13px;
+  font-weight: 600;
+  color: #888;
+  min-width: 32px;
+}
+
+.empty-hint-inline {
+  padding: 10px 16px;
+  font-size: 12px;
+  color: #bbb;
+  font-style: italic;
 }
 
 .no-tab {
