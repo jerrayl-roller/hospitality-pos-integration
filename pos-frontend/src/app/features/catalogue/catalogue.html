@@ -1,0 +1,72 @@
+<div class="catalogue-container">
+  <!-- Loading state -->
+  @if (loading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="48"></mat-spinner>
+      <div class="loading-cards">
+        @for (i of [1,2,3,4,5,6]; track i) {
+          <div class="skeleton-card"></div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Error state -->
+  @if (!loading() && error()) {
+    <div class="error-state">
+      <mat-icon>error_outline</mat-icon>
+      <p>Failed to load products. Check your connection and try again.</p>
+      <button mat-raised-button color="primary" (click)="loadProducts()">
+        <mat-icon>refresh</mat-icon> Retry
+      </button>
+    </div>
+  }
+
+  <!-- Loaded state -->
+  @if (!loading() && !error()) {
+    <!-- Category tabs -->
+    @if (categories().length > 0) {
+      <div class="category-tabs">
+        @for (cat of categories(); track cat) {
+          <button
+            mat-button
+            class="category-btn"
+            [class.active]="selectedCategory() === cat"
+            (click)="selectCategory(cat)">
+            {{ cat }}
+          </button>
+        }
+      </div>
+    }
+
+    <!-- Product grid -->
+    <div class="product-grid">
+      @for (product of filteredProducts(); track product.productId) {
+        <mat-card class="product-card">
+          <mat-card-content>
+            <div class="product-category-badge">{{ product.category ?? 'Uncategorised' }}</div>
+            <h3 class="product-name">{{ product.name }}</h3>
+            <div class="product-price">{{ product.price | currency:'AUD':'symbol':'1.2-2' }}</div>
+          </mat-card-content>
+          <mat-card-actions>
+            <button
+              mat-raised-button
+              color="primary"
+              [disabled]="!tabState.currentTab || addingProductId() === product.productId"
+              (click)="addToTab(product)">
+              @if (addingProductId() === product.productId) {
+                <mat-spinner diameter="18" color="accent"></mat-spinner>
+              } @else {
+                Add to Tab
+              }
+            </button>
+          </mat-card-actions>
+        </mat-card>
+      }
+
+      @if (filteredProducts().length === 0) {
+        <p class="no-products">No products in this category.</p>
+      }
+    </div>
+  }
+</div>

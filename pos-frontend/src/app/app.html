@@ -1,0 +1,46 @@
+<mat-sidenav-container class="shell-container">
+  <!-- Left nav -->
+  <mat-sidenav mode="side" opened class="left-nav">
+    <div class="nav-brand">
+      <mat-icon>local_bar</mat-icon>
+      <span>ROLLER POS</span>
+    </div>
+    <mat-nav-list>
+      <a mat-list-item routerLink="/catalogue" routerLinkActive="active-link">
+        <mat-icon matListItemIcon>menu_book</mat-icon>
+        <span matListItemTitle>Catalogue</span>
+      </a>
+    </mat-nav-list>
+  </mat-sidenav>
+
+  <!-- Main content -->
+  <mat-sidenav-content class="main-content">
+    <!-- Top toolbar -->
+    <mat-toolbar color="primary" class="top-bar">
+      <span class="toolbar-title">F&amp;B Point of Sale</span>
+      <span class="spacer"></span>
+
+      @if (tabState.tab$ | async; as tab) {
+        <button mat-button class="tab-indicator" (click)="toggleTabDrawer()">
+          <mat-icon>receipt_long</mat-icon>
+          Tab open · {{ tab.grandTotal | currency:'AUD':'symbol':'1.0-2' }}
+        </button>
+      } @else {
+        <button mat-raised-button (click)="openNewTab()" [disabled]="openingTab">
+          <mat-icon>add</mat-icon>
+          {{ openingTab ? 'Opening…' : 'Open New Tab' }}
+        </button>
+      }
+    </mat-toolbar>
+
+    <!-- Page content -->
+    <div class="page-content">
+      <router-outlet></router-outlet>
+    </div>
+  </mat-sidenav-content>
+
+  <!-- Right tab drawer -->
+  <mat-sidenav #tabDrawer position="end" mode="over" class="tab-panel">
+    <app-tab-drawer></app-tab-drawer>
+  </mat-sidenav>
+</mat-sidenav-container>
