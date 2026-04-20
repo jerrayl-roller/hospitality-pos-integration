@@ -35,6 +35,7 @@ builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IBookingResyncService, BookingResyncService>();
 builder.Services.AddScoped<IPaymentLockService, PaymentLockService>();
 builder.Services.AddScoped<IRollerGiftCardService, RollerGiftCardService>();
+builder.Services.AddScoped<IRollerSyncService, RollerSyncService>();
 builder.Services.AddScoped<TabService>();
 builder.Services.AddScoped<SettlementService>();
 

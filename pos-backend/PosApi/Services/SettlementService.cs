@@ -11,6 +11,7 @@ public class SettlementService(
     PosDbContext db,
     IPaymentLockService paymentLockService,
     IRollerGiftCardService giftCardService,
+    IRollerSyncService rollerSync,
     ILogger<SettlementService> logger)
 {
     private static readonly JsonSerializerOptions JsonOpts = new() { PropertyNameCaseInsensitive = true };
@@ -125,19 +126,90 @@ public class SettlementService(
         if (paid < tab.GrandTotal - 0.005m)
             return (null, "not_fully_paid");
 
-        if (tab.BookingUniqueId is not null)
+        tab.SettledAt = DateTime.UtcNow;
+
+        if (tab.BookingUniqueId is null)
         {
-            using var lockCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            lockCts.CancelAfter(TimeSpan.FromSeconds(5));
-            try { await paymentLockService.ReleaseLockAsync(tab.BookingUniqueId, lockCts.Token); }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Lock release failed for tab {TabId} — settling anyway", tabId);
-            }
+            tab.PaymentStatus = "complete";
+            await db.SaveChangesAsync(ct);
+            return (TabDto.FromTab(tab), null);
         }
 
-        tab.PaymentStatus = "settled";
-        tab.SettledAt = DateTime.UtcNow;
+        var addedItems = Deserialize(tab.AddedItemsJson);
+        var itemsError = await rollerSync.PushItemsAsync(tab.BookingUniqueId, addedItems, ct);
+        if (itemsError is not null)
+        {
+            tab.PaymentStatus = "errored";
+            await db.SaveChangesAsync(ct);
+            return (TabDto.FromTab(tab), itemsError);
+        }
+
+        var paymentsError = await rollerSync.PushPaymentsAsync(tab.BookingUniqueId, tab.Payments.ToList(), ct);
+        if (paymentsError is not null)
+        {
+            tab.PaymentStatus = "errored";
+            await db.SaveChangesAsync(ct);
+            return (TabDto.FromTab(tab), paymentsError);
+        }
+
+        try
+        {
+            await paymentLockService.ReleaseLockAsync(tab.BookingUniqueId, ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Lock release failed for tab {TabId}", tabId);
+            tab.PaymentStatus = "errored";
+            await db.SaveChangesAsync(ct);
+            return (TabDto.FromTab(tab), "roller_lock_release_failed");
+        }
+
+        tab.PaymentStatus = "complete";
+        await db.SaveChangesAsync(ct);
+        return (TabDto.FromTab(tab), null);
+    }
+
+    public async Task<(TabDto? tab, string? error)> RetrySyncAsync(
+        Guid tabId, CancellationToken ct = default)
+    {
+        var tab = await db.Tabs.Include(t => t.Payments)
+            .FirstOrDefaultAsync(t => t.TabId == tabId, ct);
+        if (tab is null) return (null, "not_found");
+        if (tab.PaymentStatus != "errored") return (null, "tab_not_errored");
+        if (tab.BookingUniqueId is null)
+        {
+            tab.PaymentStatus = "complete";
+            await db.SaveChangesAsync(ct);
+            return (TabDto.FromTab(tab), null);
+        }
+
+        var addedItems = Deserialize(tab.AddedItemsJson);
+        var itemsError = await rollerSync.PushItemsAsync(tab.BookingUniqueId, addedItems, ct);
+        if (itemsError is not null)
+        {
+            await db.SaveChangesAsync(ct);
+            return (TabDto.FromTab(tab), itemsError);
+        }
+
+        var paymentsError = await rollerSync.PushPaymentsAsync(tab.BookingUniqueId, tab.Payments.ToList(), ct);
+        if (paymentsError is not null)
+        {
+            await db.SaveChangesAsync(ct);
+            return (TabDto.FromTab(tab), paymentsError);
+        }
+
+        try
+        {
+            await paymentLockService.ReleaseLockAsync(tab.BookingUniqueId, ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Lock release failed on retry for tab {TabId}", tabId);
+            await db.SaveChangesAsync(ct);
+            return (TabDto.FromTab(tab), "roller_lock_release_failed");
+        }
+
+        tab.PaymentStatus = "complete";
         await db.SaveChangesAsync(ct);
         return (TabDto.FromTab(tab), null);
     }

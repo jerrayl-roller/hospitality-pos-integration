@@ -42,6 +42,7 @@
   text-transform: capitalize;
 
   &.status-open { background: #e8f5e9; color: #2e7d32; }
+  &.status-complete { background: #e3f2fd; color: #1565c0; }
   &.status-settled { background: #e3f2fd; color: #1565c0; }
   &.status-failed { background: #fce4ec; color: #c62828; }
   &.status-walkout_pending { background: #fff3e0; color: #e65100; }
@@ -129,6 +130,19 @@ td.mat-column-items, th.mat-column-items { text-align: center; }
   color: #888;
   p { margin: 0; font-size: 13px; }
   mat-icon { font-size: 36px; height: 36px; width: 36px; color: #e53935; }
+}
+
+.sync-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fce4ec;
+  color: #c62828;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 16px;
+  mat-icon { font-size: 18px; height: 18px; width: 18px; flex-shrink: 0; }
 }
 
 // Receipt print styles

@@ -109,6 +109,15 @@ public class TabsController(
         return Ok(tab);
     }
 
+    [HttpPost("{tabId:guid}/retry-sync")]
+    public async Task<IActionResult> RetrySync(Guid tabId, CancellationToken ct)
+    {
+        var (tab, error) = await settlementService.RetrySyncAsync(tabId, ct);
+        if (tab is null && error == "not_found") return NotFound();
+        if (tab is null) return Conflict(new { error });
+        return Ok(tab);
+    }
+
     [HttpGet("{tabId:guid}/receipt")]
     public async Task<IActionResult> GetReceipt(Guid tabId, CancellationToken ct)
     {

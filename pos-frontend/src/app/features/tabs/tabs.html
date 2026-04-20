@@ -88,13 +88,25 @@
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef></th>
               <td mat-cell *matCellDef="let tab">
-                @if (tab.paymentStatus === 'settled') {
+                @if (tab.paymentStatus === 'complete' || tab.paymentStatus === 'errored') {
                   <button mat-button color="primary"
                     [class.active-receipt]="receiptTabId() === tab.tabId"
                     (click)="openReceipt(tab.tabId)">
                     <mat-icon>receipt_long</mat-icon>
                     Receipt
                   </button>
+                  @if (tab.paymentStatus === 'errored') {
+                    <button mat-stroked-button color="warn"
+                      [disabled]="retrySyncingTabId() === tab.tabId"
+                      (click)="retrySync(tab.tabId)">
+                      @if (retrySyncingTabId() === tab.tabId) {
+                        <mat-spinner diameter="16"></mat-spinner>
+                      } @else {
+                        <mat-icon>sync</mat-icon>
+                        Retry Sync
+                      }
+                    </button>
+                  }
                 } @else if (!isActive(tab.tabId)) {
                   <button
                     mat-button
@@ -157,6 +169,13 @@
           <p>{{ receiptError() }}</p>
         </div>
       } @else if (receipt()) {
+
+        @if (receiptTabStatus() === 'errored') {
+          <div class="sync-error-banner">
+            <mat-icon>warning</mat-icon>
+            <span>Sync to ROLLER failed. Use Retry Sync to re-attempt.</span>
+          </div>
+        }
 
         <div class="receipt-print">
 

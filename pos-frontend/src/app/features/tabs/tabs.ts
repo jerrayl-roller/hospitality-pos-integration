@@ -88,6 +88,7 @@ export class TabsComponent implements OnInit {
   readonly receipt = signal<ReceiptData | null>(null);
   readonly receiptLoading = signal(false);
   readonly receiptError = signal<string | null>(null);
+  readonly retrySyncingTabId = signal<string | null>(null);
 
   readonly columns = ['status', 'guest', 'card', 'opened', 'items', 'total', 'amountDue', 'actions'];
 
@@ -130,6 +131,20 @@ export class TabsComponent implements OnInit {
   closeReceipt(): void {
     this.receiptTabId.set(null);
     this.receipt.set(null);
+  }
+
+  retrySync(tabId: string): void {
+    this.retrySyncingTabId.set(tabId);
+    this.api.post<TabSummary>(`/api/tabs/${tabId}/retry-sync`, {}).subscribe({
+      next: () => { this.retrySyncingTabId.set(null); this.load(); },
+      error: () => this.retrySyncingTabId.set(null)
+    });
+  }
+
+  receiptTabStatus(): string | null {
+    const tabId = this.receiptTabId();
+    if (!tabId) return null;
+    return this.tabs().find(t => t.tabId === tabId)?.paymentStatus ?? null;
   }
 
   isActive(tabId: string): boolean {
